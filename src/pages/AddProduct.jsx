@@ -29,7 +29,7 @@ const AddProduct = () => {
   const Swal = require("sweetalert2");
 
   const fetchCategories = async () => {
-    const res = await axios.get(`http://localhost:5000/category/all`);
+    const res = await axios.get(`${API_URL}/category/all`);
     setCategories(res.data);
   };
 
