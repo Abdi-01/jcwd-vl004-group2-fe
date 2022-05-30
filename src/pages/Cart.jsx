@@ -31,16 +31,25 @@ const Cart = () => {
   }, [page]);
 
   const getCart = async () => {
-    if (page > cart?.total_page || page < 1) {
-      return;
-    }
-    const cartData = await axios.get(`${API_URL}/cart/get?page=${page}`, {
-      headers: {
-        Authorization: `Bearer ${userToken}`,
-      },
-    });
+    try {
+      if (page > cart?.total_page || page < 1) {
+        return;
+      }
+      setIsLoading(true);
 
-    setCart(cartData.data);
+      const cartData = await axios.get(`${API_URL}/cart/get?page=${page}`, {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+        },
+      });
+
+      setCart(cartData.data);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      toast.error(error.response.data.message);
+    }
   };
 
   const deleteItem = async (itemId) => {
@@ -249,6 +258,7 @@ const Cart = () => {
                     key={item.id}
                     item={item}
                     page={page}
+                    setPage={setPage}
                     isLoading={isLoading}
                     setCart={setCart}
                     setIsLoading={setIsLoading}

@@ -15,6 +15,11 @@ export default (state = init_state, action) => {
         email: action.payload.email,
         phone_number: action.payload.phone_number,
       };
+    case 'UPDATE_PHONE':
+      return {
+        ...state,
+        phone_number: action.payload,
+      };
     case 'USER_LOGOUT':
       return init_state;
     default:

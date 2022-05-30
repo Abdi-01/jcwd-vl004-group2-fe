@@ -137,14 +137,14 @@ const MessagesModal = ({ message, currentPage, limit, setMessages, setMaxPage, s
 
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-200"
+            enter="ease-out duration-300"
             enterFrom="opacity-90 -translate-y-2"
             enterTo="opacity-100 translate-y-0"
             leave="ease-in duration-200"
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-90 -translate-y-2"
           >
-            <div className="w-[70%] sm:w-[65%] md:w-[60%] lg:w-[55%] xl:w-[40%] bg-gray-50 rounded-lg fixed z-20 shadow">
+            <div className="w-[75%] sm:w-[65%] md:w-[60%] lg:w-[55%] xl:w-[45%] bg-gray-50 rounded-lg fixed z-20 shadow">
               <div className="flex flex-col px-5 p-2">
                 <div className="w-full flex flex-col">
                   <span className="text-base lg:text-xl font-bold text-gray-600 my-[2px]">{message.header}</span>

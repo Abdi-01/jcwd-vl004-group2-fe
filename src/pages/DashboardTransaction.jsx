@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { FaArrowLeft, FaArrowRight, FaSearch } from 'react-icons/fa';
 import { AiOutlineClose } from 'react-icons/ai';
 import { FiCalendar, FiMinus, FiFilter } from 'react-icons/fi';
@@ -12,24 +12,25 @@ import { startOfDay, endOfDay, format } from 'date-fns';
 import { DateRangePicker } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
-import Swal from 'sweetalert2';
 import TransactionTable from '../components/TransactionTable';
+import { debounce } from 'throttle-debounce';
 
 const DashboardTransaction = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [productNotFound, setProductNotFound] = useState(false);
+  const [limit, setLimit] = useState(5);
   const [transactions, setTransactions] = useState();
   const [activePage, setActivePage] = useState(1);
   const [startNumber, setStartNumber] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
   const [totalPage, setTotalPage] = useState(1);
   const [currentSortDate, setCurrentSortDate] = useState('');
   const [currentSortStatus, setCurrentSortStatus] = useState('');
   const { pathname } = useLocation();
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
-  const [startDate, setStartDate] = useState(format(startOfDay(Date.now()), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(endOfDay(Date.now()), 'yyyy-MM-dd'));
+  const [defaultStartDate, setStartDate] = useState(format(startOfDay(Date.now()), 'yyyy-MM-dd'));
+  const [defaultEndDate, setEndDate] = useState(format(endOfDay(Date.now()), 'yyyy-MM-dd'));
   const adminToken = localStorage.getItem('adminToken');
   const [ranges, setRanges] = useState([
     {
@@ -39,13 +40,8 @@ const DashboardTransaction = () => {
     },
   ]);
   const [selectedDates, setSelectedDates] = useState({});
-  const limit = 6;
-
-  console.log(selectedDates.startDate);
 
   const socket = useSelector((state) => state.socket.instance);
-
-  console.log(transactions);
 
   const useDebounce = (value, delay) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -64,24 +60,27 @@ const DashboardTransaction = () => {
   };
 
   const debouncedSearch = useDebounce(keyword, 1000);
+  const debouncedDate = useDebounce(currentSortDate, 0);
+  const debouncedStatus = useDebounce(currentSortStatus, 0);
+
+  const loadingFalse = () => {
+    setLoading(false);
+  };
 
   useEffect(() => {
     dispatch({ type: 'ALERT_CLEAR', payload: 'history' });
 
     const getTransaction = async () => {
       try {
-        if (activePage > totalPage || !activePage) {
-          return;
-        }
         setLoading(true);
         const response = await axios.post(
           `${API_URL}/admin/transaction/get?keyword=${debouncedSearch}`,
           {
-            page: activePage,
+            offset: activePage * limit - limit,
             startDate: selectedDates.startDate,
             endDate: selectedDates.endDate,
-            sort: currentSortDate,
-            status: currentSortStatus,
+            sort: debouncedDate,
+            status: debouncedStatus,
             limit,
           },
           {
@@ -90,12 +89,11 @@ const DashboardTransaction = () => {
             },
           }
         );
-
-        if (response.data.data.length === 0) setProductNotFound(true);
+        setMaxPage(response.data.data.length);
         setTransactions(response.data.data);
         setTotalPage(response.data.totalPage);
         setStartNumber(response.data.startNumber);
-        setTimeout(setLoading(false), 500);
+        setTimeout(loadingFalse, 1000);
       } catch (error) {
         toast.error(error.response.data.message);
       }
@@ -116,79 +114,47 @@ const DashboardTransaction = () => {
     return () => {
       dispatch({ type: 'ALERT_CLEAR', payload: 'history' });
     };
-  }, [activePage, currentSortDate, startDate, endDate, selectedDates, debouncedSearch, currentSortStatus, socket]);
+  }, [activePage, defaultStartDate, defaultEndDate, selectedDates, debouncedSearch, debouncedStatus, debouncedDate, socket]);
+
+  useEffect(() => {
+    setActivePage(1);
+  }, [debouncedSearch, debouncedStatus, debouncedDate, selectedDates]);
 
   const renderTransactions = () => {
     return transactions?.map((item, i) => <TransactionTable key={item.id} item={item} i={i} startNumber={startNumber} socket={socket} />);
   };
 
-  const renderAlert = () => {
-    Swal.fire({
-      text: 'Product Not Found!',
-      icon: 'question',
-      confirmButtonColor: '#3085d6',
-      confirmButtonText: 'Okay',
-    }).then((result) => {
-      if (result.isConfirmed) {
-        try {
-          setProductNotFound(false);
-          // go back to current url i intended to delete all the params in the url
-          setKeyword('');
-          navigate(pathname);
-          setCurrentSortStatus('');
-          if (selectedDates.startDate !== undefined) {
-            setRanges([
-              {
-                ...ranges[0],
-                startDate: new Date(),
-                endDate: new Date(),
-              },
-            ]);
-            setSelectedDates({});
-          }
-        } catch (error) {
-          console.log(error);
-        }
+  const handChangePage = useCallback(
+    debounce(2000, (e) => {
+      if (e.target.value <= totalPage && e.target.value > 0) {
+        setActivePage(+e.target.value);
+      } else {
+        document.getElementById('inputPage').value = +activePage;
       }
-    });
-  };
+    }),
+    [totalPage, activePage]
+  );
 
-  const renderPages = () => {
-    const pagination = [];
-    for (let i = 1; i <= totalPage; i++) {
-      pagination.push(i);
-    }
-    return pagination.map((value) => {
-      return (
-        // <AdminPagination key={value} pagination={value} setPage={setPage} />
-        <option key={value}>{value}</option>
-      );
-    });
-  };
-
-  const nextPageHandler = () => {
-    if (activePage < totalPage) {
-      setActivePage(activePage + 1);
+  const handNextPage = () => {
+    if (activePage < totalPage && activePage) {
+      setActivePage(+activePage + 1);
+      document.getElementById('inputPage').value = +activePage + 1;
     }
   };
 
-  const prevPageHandler = () => {
+  const handPrevPage = () => {
     if (activePage > 1) {
-      setActivePage(activePage - 1);
+      setActivePage(+activePage - 1);
+      document.getElementById('inputPage').value = +activePage - 1;
     }
   };
 
   return (
-    <div className="h-full w-full bg-gray-100">
+    <div className="h-full min-w-full w-max bg-gray-100">
       {/* Search Bar */}
-      <div className="h-16 bg-white shadow-sm pl-80 pr-8 fixed z-[3] w-10 top-0 left-0 flex items-center">
+      <div className="h-16 bg-white shadow-sm pl-80 pr-8 fixed z-[12] w-10 top-0 left-0 flex items-center">
         <div className="flex justify-center items-center relative">
-          <FaSearch
-            // onClick={() => {
-            //   setSearchParams({ keyword }, { replace: true });
-            // }}
-            className="absolute left-2 text-gray-400 bg-gray-100 active:scale-95 transition"
-          />
+          <FaSearch className="absolute left-2 text-gray-400 bg-gray-100 active:scale-95 transition" />
           <input
             type="text"
             value={keyword}
@@ -212,14 +178,18 @@ const DashboardTransaction = () => {
           <h1 className="text-3xl text-gray-700 font-bold">Transactions</h1>
         </div>
         <div className="flex justify-between items-center space-x-4">
+          <div className="flex gap-2 items-center mr-5">
+            <FiFilter size={24} />
+            {selectedDates.startDate ? <span>Filtered Date</span> : <span>All Transactions</span>}
+          </div>
           <div className="relative ml-auto group">
-            <div className="p-2 rounded-lg text-white bg-primary flex items-center cursor-pointer group">
+            <div className="py-2.5 px-6 text-white bg-primary hover:bg-blue-400 transition rounded-xl cursor-pointer group">
               <span
                 className={`font-semibold flex items-center gap-2 text-sm ${
-                  selectedDates.gte && selectedDates.lte ? 'text-sky-500' : 'text-white group-hover:hover:text-sky-600'
+                  selectedDates.gte && selectedDates.lte ? 'text-sky-500' : 'text-white group-hover:hover:text-white'
                 } transition`}
               >
-                <FiFilter className="text-white" />
+                <FiCalendar size={24} className="text-white" />
                 {selectedDates.gte && selectedDates.lte
                   ? `${selectedDates.gte.toLocaleDateString('id')} - ${selectedDates.lte.toLocaleDateString('id')}`
                   : 'Select Date'}
@@ -233,10 +203,7 @@ const DashboardTransaction = () => {
                 months={1}
                 ranges={ranges}
                 direction="horizontal"
-                // preventSnapRefocus={true}
-                // calendarFocus="backwards"
               />
-
               <div className="w-full mt-2 flex justify-center gap-3">
                 <button
                   className="w-24 py-2 rounded-2xl text-white font-bold bg-warning hover:brightness-110 active:scale-95 transition"
@@ -272,7 +239,7 @@ const DashboardTransaction = () => {
               name=""
               id=""
               onChange={(e) => setCurrentSortDate(e.target.value)}
-              className="py-2.5 px-6 text-white bg-primary hover:bg-blue-400 transition rounded-xl"
+              className="py-2.5 px-6 text-white bg-primary hover:bg-blue-400 cursor-pointer transition rounded-xl"
             >
               {/* updatedAt vs createdAt */}
               <option value="" selected>
@@ -285,9 +252,10 @@ const DashboardTransaction = () => {
           <div>
             <select
               name=""
+              value={currentSortStatus}
               id="statusSelector"
               onChange={(e) => setCurrentSortStatus(e.target.value)}
-              className="py-2.5 px-6 text-white bg-primary hover:bg-blue-400 transition rounded-xl"
+              className="py-2.5 px-6 text-white bg-primary hover:bg-blue-400 cursor-pointer transition rounded-xl"
             >
               {/* updatedAt vs createdAt */}
               <option value="">Sort by Status</option>
@@ -300,12 +268,12 @@ const DashboardTransaction = () => {
         </div>
       </div>
       {loading ? (
-        <div className="bg-white shadow-sm p-5">
-          <table className="w-full">
+        <div className="px-5">
+          <table className="table w-full">
             <thead>
               <tr>
-                <th className="bg-white border-b border-gray-200">No</th>
-                <th className="bg-white border-b border-gray-200">User Name</th>
+                <th className="bg-white border-b border-gray-200 shadow-sm">No</th>
+                <th className="bg-white border-b border-gray-200">Name</th>
                 <th className="bg-white border-b border-gray-200">Address</th>
                 <th className="bg-white border-b border-gray-200">Delivery</th>
                 <th className="bg-white border-b border-gray-200">Notes</th>
@@ -331,47 +299,73 @@ const DashboardTransaction = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white shadow-sm p-5">
-          <table className="w-full">
+        <div className="px-5">
+          <table className="table w-full">
             <thead>
               <tr>
-                <th className="bg-white border-b border-gray-200">No</th>
-                <th className="bg-white border-b border-gray-200">User Name</th>
-                <th className="bg-white border-b border-gray-200">Address</th>
-                <th className="bg-white border-b border-gray-200">Delivery</th>
-                <th className="bg-white border-b border-gray-200">Notes</th>
-                <th className="bg-white border-b border-gray-200">Invoice Date</th>
-                <th className="bg-white border-b border-gray-200">Details</th>
-                <th className="bg-white border-b border-gray-200">Status</th>
-                <th className="bg-white border-b border-gray-200">Actions</th>
+                <th className="bg-white border-b text-center border-gray-200 shadow-sm">No</th>
+                <th className="bg-white border-b text-center border-gray-200">Name</th>
+                <th className="bg-white border-b text-center border-gray-200">Address</th>
+                <th className="bg-white border-b text-center border-gray-200">Delivery</th>
+                <th className="bg-white border-b text-center border-gray-200">Notes</th>
+                <th className="bg-white border-b text-center border-gray-200">Invoice Date</th>
+                <th className="bg-white border-b text-center border-gray-200">Details</th>
+                <th className="bg-white border-b text-center border-gray-200">Status</th>
+                <th className="bg-white border-b text-center border-gray-200">Actions</th>
               </tr>
             </thead>
-            <tbody>{productNotFound ? <>{renderAlert()}</> : <>{renderTransactions()}</>}</tbody>
+            <tbody>
+              {maxPage === 0 ? (
+                <tr className="text-sm font-medium text-gray-700 border-b border-gray-200">
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <td>
+                    <div class="flex h-screen w-full items-center justify-center">
+                      <button type="button" class="flex items-center rounded-lg bg-warning px-4 py-2 text-white" disabled>
+                        <span class="font-medium">Transaction Not Found!</span>
+                      </button>
+                    </div>
+                  </td>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                  <th className="py-4 px-4 text-center"></th>
+                </tr>
+              ) : (
+                <>{renderTransactions()}</>
+              )}
+            </tbody>
           </table>
           <div className="mt-3 flex justify-center items-center gap-4 pt-3">
             <button
-              onClick={prevPageHandler}
-              className={activePage === 1 ? `hover:cursor-not-allowed` : `hover:cursor-pointer`}
+              className={+activePage === 1 ? `hover:cursor-not-allowed` : `hover:cursor-pointer`}
               disabled={activePage === 1}
+              onClick={handPrevPage}
             >
+              {' '}
               <FaArrowLeft />
             </button>
             <div>
               Page{' '}
-              <select
+              <input
+                id="inputPage"
                 type="number"
-                className="mx-2 text-center focus:outline-none w-10 bg-gray-100"
-                value={activePage}
-                onChange={(e) => setActivePage(+e.target.value)}
-              >
-                {renderPages()}
-              </select>{' '}
+                className="border text-center border-gray-300 rounded-lg bg-white focus:outline-none w-10 hover:border-sky-500 focus:outline-sky-500 transition cursor-pointer"
+                defaultValue={activePage}
+                onChange={handChangePage}
+              />{' '}
               of {totalPage}
             </div>
             <button
-              onClick={nextPageHandler}
-              className={activePage === totalPage ? `hover:cursor-not-allowed` : `hover:cursor-pointer`}
+              className={+activePage === totalPage ? `hover:cursor-not-allowed` : `hover:cursor-pointer`}
               disabled={activePage === totalPage}
+              onClick={handNextPage}
             >
               <FaArrowRight />
             </button>

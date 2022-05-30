@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Axios from 'axios';
 import { API_URL } from '../assets/constants';
 
-import { Menu, Transition } from '@headlessui/react';
+import { Dialog, Menu, Transition } from '@headlessui/react';
 import { AiOutlineEye, AiOutlineEyeInvisible, AiFillCloseCircle, AiOutlineEdit, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdVerified, MdAddAPhoto } from 'react-icons/md';
 import { BiDiamond } from 'react-icons/bi';
@@ -12,6 +12,7 @@ import { toast } from 'react-toastify';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
+import { useDispatch } from 'react-redux';
 
 const ProfileMenu = ({ editMode, setEditMode }) => {
   return (
@@ -57,6 +58,7 @@ const ProfileMenu = ({ editMode, setEditMode }) => {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const token = localStorage.getItem('userToken');
   const [editMode, setEditMode] = useState(false);
   const [userData, setUserData] = useState({});
@@ -66,6 +68,7 @@ const Profile = () => {
   const [showNew, setShowNew] = useState(false);
   const [showConf, setShowConf] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -123,14 +126,18 @@ const Profile = () => {
         setProfileLoading(false);
 
         if (response.data.conflict) {
-          return toast.warning(response.data.message);
+          toast.warning(response.data.message, { position: 'bottom-left', theme: 'colored' });
+          return setOpen(false);
         }
+
+        dispatch({ type: 'UPDATE_PHONE', payload: response.data.user.phone_number });
 
         setUserData(response.data.user);
         document.getElementById('profile-picture').src = `${API_URL}/${response.data.user.profile_picture}`;
 
         toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
 
+        setOpen(false);
         setEditMode(false);
       } catch (err) {
         setProfileLoading(false);
@@ -203,7 +210,7 @@ const Profile = () => {
               </span>
               <ProfileMenu editMode={editMode} setEditMode={setEditMode} />
             </div>
-            <div className="w-full h-[1px] bg-slate-300" />
+            <div className="w-full h-px bg-slate-300" />
           </div>
           <div className="w-full mt-4 mb-2 px-3 py-2 rounded-box border border-emerald-200 relative flex flex-col">
             <span className="text-sm font-semibold text-sky-400 bg-white px-1 absolute -top-3 left-4">Email:</span>
@@ -233,7 +240,7 @@ const Profile = () => {
                     <span className="text-xl focus:outline-none font-light text-emerald-400">{userData.name}</span>
                   )}
                   <div
-                    className={`${editMode ? 'w-full' : 'w-0'} h-[1px] ${
+                    className={`${editMode ? 'w-full' : 'w-0'} h-px ${
                       formik.touched.name && formik.errors.name ? 'bg-rose-300' : 'bg-sky-300'
                     }  transition-all duration-200`}
                   />
@@ -263,7 +270,7 @@ const Profile = () => {
                     </span>
                   )}
                   <div
-                    className={`${editMode ? 'w-full' : 'w-0'} h-[1px] ${
+                    className={`${editMode ? 'w-full' : 'w-0'} h-px ${
                       formik.errors.username ? 'bg-rose-300' : 'bg-sky-300'
                     } transition-all duration-200`}
                   />
@@ -293,7 +300,7 @@ const Profile = () => {
                     </span>
                   )}
                   <div
-                    className={`${editMode ? 'w-full' : 'w-0'} h-[1px] ${
+                    className={`${editMode ? 'w-full' : 'w-0'} h-px ${
                       formik.errors.phone_number ? 'bg-rose-300' : 'bg-sky-300'
                     } transition-all duration-200`}
                   />
@@ -303,7 +310,7 @@ const Profile = () => {
                 </div>
               </div>
             </form>
-            <div className="w-full flex justify-center gap-2">
+            <div className={`w-full flex justify-center gap-3 ${editMode ? 'mt-3' : 'mt-0'} transition duration-200`}>
               <button
                 onClick={() => {
                   setEditMode(false);
@@ -311,34 +318,85 @@ const Profile = () => {
                   formik.resetForm();
                 }}
                 className={`w-28 ${
-                  editMode ? 'visible h-10 mb-1 mt-5 opacity-100' : 'h-0 invisible opacity-0'
-                } rounded-lg font-semibold hover:brightness-110 active:scale-95 text-white bg-gradient-to-r from-red-500 to-rose-300 transition-all duration-200`}
+                  editMode ? 'h-10 opacity-100' : 'h-0 opacity-0'
+                } rounded-xl font-semibold hover:brightness-110 active:scale-95 text-white bg-gradient-to-r from-red-500 to-rose-400 transition-all duration-200 flex items-center justify-center`}
               >
                 Cancel
               </button>
-              <button
-                type="submit"
-                form="update-form"
-                disabled={
-                  (formik.values.name === userData.name &&
-                    (formik.values.username === userData.username || formik.values.username === '') &&
-                    (formik.values.phone_number === userData.phone_number || formik.values.phone_number === '') &&
-                    !profileImage) ||
-                  profileLoading
-                }
-                className={`w-28 ${
-                  editMode ? 'visible h-10 mb-1 mt-5 opacity-100' : 'h-0 invisible opacity-0'
-                } rounded-lg font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-300 disabled:bg-opacity-70 disabled:from-emerald-200 disabled:to-emerald-200 disabled:active:scale-100 disabled:hover:brightness-100 hover:brightness-125 active:scale-95 transition-all flex items-center justify-center gap-1 duration-200`}
-              >
-                {profileLoading ? (
-                  <>
-                    <AiOutlineLoading3Quarters className="animate-spin" />
-                    Updating..
-                  </>
-                ) : (
-                  'Save'
-                )}
-              </button>
+              <>
+                <button
+                  onClick={() => setOpen(true)}
+                  disabled={
+                    (formik.values.name === userData.name &&
+                      (formik.values.username === userData.username || formik.values.username === '') &&
+                      (formik.values.phone_number === userData.phone_number || formik.values.phone_number === '') &&
+                      !profileImage) ||
+                    profileLoading
+                  }
+                  className={`w-28 ${
+                    editMode ? 'h-10 opacity-100' : 'h-0 opacity-0'
+                  } rounded-xl font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-400 disabled:bg-opacity-70 disabled:from-emerald-200 disabled:to-emerald-200 disabled:active:scale-100 disabled:hover:brightness-100 hover:brightness-125 active:scale-95 transition-all duration-200`}
+                >
+                  Save
+                </button>
+
+                <Transition appear as={Fragment} show={open}>
+                  <Dialog as="div" onClose={() => setOpen(false)} className="fixed inset-0 z-[300] flex items-center justify-center">
+                    <Transition.Child
+                      as={Fragment}
+                      enter="ease-out duration-300"
+                      enterFrom="opacity-0"
+                      enterTo="opacity-100"
+                      leave="ease-in duration-200"
+                      leaveFrom="opacity-100"
+                      leaveTo="opacity-0"
+                    >
+                      <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-40" />
+                    </Transition.Child>
+
+                    <Transition.Child
+                      as={Fragment}
+                      enter="ease-out duration-300"
+                      enterFrom="-translate-y-4 opacity-90"
+                      enterTo="translate-y-0 opaciy-100"
+                      leave="ease-in duration-200"
+                      leaveFrom="translate-y-0 opaciy-100"
+                      leaveTo="-translate-y-4 opacity-90"
+                    >
+                      <div className="w-2/3 md:w-[45%] lg:w-1/3 xl:w-[27.5%] absolute z-10 py-7 flex flex-col rounded-box bg-sky-50 shadow">
+                        <div className="flex justify-center pb-7">
+                          <span className="text-2xl md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">
+                            Update your profile?
+                          </span>
+                        </div>
+                        <div className="flex justify-center items-center gap-3">
+                          <button
+                            onClick={() => setOpen(false)}
+                            className="w-36 py-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-400 font-bold text-white hover:brightness-110 active:scale-95 transition shadow"
+                          >
+                            Nevermind
+                          </button>
+                          <button
+                            type="submit"
+                            form="update-form"
+                            disabled={profileLoading}
+                            className="w-36 py-2 rounded-xl bg-gradient-to-r from-sky-400 to-emerald-400 font-bold text-white hover:brightness-110 active:scale-95 transition flex items-center justify-center gap-2 disabled:from-sky-300 disabled:to-sky-300 disabled:hover:brightness-100 disabled:active:scale-100 shadow"
+                          >
+                            {profileLoading ? (
+                              <>
+                                <AiOutlineLoading3Quarters className="animate-spin" />
+                                Updating..
+                              </>
+                            ) : (
+                              'Update'
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </Transition.Child>
+                  </Dialog>
+                </Transition>
+              </>
             </div>
           </div>
           <div className="w-full mt-2 mb-4 pt-4 px-3 rounded-box border border-emerald-200 relative flex flex-col items-center">
@@ -506,8 +564,8 @@ const Profile = () => {
           </div>
         </div>
         <div className="w-[30%] sm:w-[25%] lg:w-[22%] xl:w-[18%] h-max bg-white rounded-xl border flex flex-col">
-          <div className="w-full py-5 flex justify-center items-center relative">
-            <div className="w-32 h-32 md:h-28 md:w-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 rounded-full flex justify-center items-center shadow bg-blue-100">
+          <div className="w-full py-5 flex justify-center items-center">
+            <div className="w-32 h-32 md:h-28 md:w-28 lg:w-36 lg:h-36 xl:w-40 xl:h-40 rounded-full flex justify-center items-center shadow bg-blue-100 relative">
               <div className="w-[90%] h-[90%] rounded-full flex justify-center items-center overflow-hidden bg-white">
                 <img
                   id="profile-picture"
@@ -515,6 +573,16 @@ const Profile = () => {
                   src={profileImage ? URL.createObjectURL(profileImage) : `${API_URL}/${userData.profile_picture}`}
                 />
               </div>
+              {editMode && (
+                <label
+                  htmlFor="profile-input"
+                  className={`p-2 rounded-full bg-gray-300 text-gray-700 flex justify-center items-center text-md lg:text-lg absolute bottom-1 right-2 lg:right-3 cursor-pointer hover:brightness-105 active:scale-95 transition-all z-50 ${
+                    editMode ? 'opacity-100 visible' : 'opacity-0 invisible'
+                  }`}
+                >
+                  <MdAddAPhoto />
+                </label>
+              )}
               <input
                 onChange={(e) => {
                   setProfileImage(e.target.files[0]);
@@ -522,23 +590,13 @@ const Profile = () => {
                 id="profile-input"
                 type="file"
                 accept="image/*"
-                className="absolute invisible top-0"
+                className="hidden"
               />
-              {editMode && (
-                <label
-                  htmlFor="profile-input"
-                  className={`h-9 w-9 rounded-full bg-gray-300 text-gray-700 flex justify-center items-center text-lg absolute top-[145px] right-9 cursor-pointer hover:brightness-105 active:scale-95 transition-all ${
-                    editMode ? 'opacity-100 visible' : 'opacity-0 invisible'
-                  }`}
-                >
-                  <MdAddAPhoto />
-                </label>
-              )}
             </div>
           </div>
           <div className="h-[2px] w-[90%] bg-gray-100 rounded-xl mx-auto" />
           <div className="w-full pt-1 pl-1 flex justify-center">
-            <span className="text-xl md:text-lg lg:text-2xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent line-clamp-1">
+            <span className="text-xl md:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent truncate">
               {userData.name}
             </span>
             {userData.is_verified === 'verified' ? (

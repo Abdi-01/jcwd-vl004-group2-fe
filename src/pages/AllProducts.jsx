@@ -237,9 +237,12 @@ const AllProducts = () => {
                   setMaxPrice('');
                   setPriceRange([]);
                   setCurrentPage(1);
+                  if (rangeError) {
+                    setRangeError('');
+                  }
                 }}
                 className={`px-2 rounded-full flex gap-1 items-center bg-rose-100 text-sm text-red-400 hover:brightness-105 transition cursor-pointer ${
-                  minPrice || maxPrice ? 'opacity-100' : 'opacity-0 invisible'
+                  minPrice || maxPrice || rangeError ? 'opacity-100' : 'opacity-0 invisible'
                 }`}
               >
                 <AiOutlineClose />
@@ -295,6 +298,7 @@ const AllProducts = () => {
                     }
 
                     setPriceRange(range);
+                    setCurrentPage(1);
                   }}
                   className="h-10 w-full rounded-lg bg-sky-400 text-white font-semibold cursor-pointer hover:brightness-110 transition"
                 >
@@ -385,6 +389,7 @@ const AllProducts = () => {
                     setCurrentPage(1);
                     setProductPerPage(parseInt(e.target.value));
                   }}
+                  disabled={!currentPage}
                   className="p-1 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-400 transition cursor-pointer"
                 >
                   <option value={12}>12</option>
@@ -396,6 +401,7 @@ const AllProducts = () => {
               <div className="flex items-center justify-center mx-2">
                 <select
                   onChange={(e) => setSort(e.target.value)}
+                  disabled={!currentPage}
                   className="p-1 border border-slate-300 rounded-lg focus:outline-none focus:border-sky-400 font-semibold transition cursor-pointer"
                 >
                   <option value={''}>Sort:</option>

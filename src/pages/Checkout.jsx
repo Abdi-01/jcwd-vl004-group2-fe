@@ -50,13 +50,13 @@ function Checkout() {
           Authorization: `Bearer ${userToken}`,
         },
       });
-      
+
       setPayments(response.data.payments);
       setDeliveryOptions(response.data.deliveryoptions);
       setAddressList(response.data.addresses);
       setAddress(
         response.data.addresses.find((item) => {
-          return item.is_default === true ? item : response.data.addresses[0];
+          return item.is_default === true;
         })
       );
       setIsLoading(false);
@@ -85,7 +85,7 @@ function Checkout() {
     } else {
       navigate('/', { replace: true });
     }
-  }, [userGlobal]);
+  }, []);
 
   const handEditPhone = async (phone_number) => {
     try {
@@ -108,7 +108,8 @@ function Checkout() {
         }
       );
 
-      // getPhone();
+      // update phone;
+      dispatch({ type: 'UPDATE_PHONE', payload: phone });
       setIsLoading(false);
       setEditPhone(false);
       toast.success(response.data.message);
@@ -122,7 +123,10 @@ function Checkout() {
     try {
       setIsLoading(true);
       // check delivery and payment
-      if (!address) {
+      if (!userGlobal?.phone_number || editPhone === true) {
+        setIsLoading(false);
+        return toast.error('Please add your phone number');
+      } else if (!address) {
         setIsLoading(false);
         return toast.error('Please add your address');
       } else if (!delivery) {
@@ -137,7 +141,7 @@ function Checkout() {
         paymentmethodId: paymentMethod.id,
         addressId: address.id,
         deliveryoptionId: parseInt(delivery),
-        phoneNumber: phone,
+        phoneNumber: userGlobal?.phone_number,
         notes,
         orderItems,
       };
@@ -173,6 +177,10 @@ function Checkout() {
     } catch (error) {
       setIsLoading(false);
       toast.error(error.response.data.message);
+      if (error.response.data.message === 'there are product not available!') {
+        localStorage.removeItem('checkout-data');
+        return navigate('/cart');
+      }
     }
   };
 
@@ -200,7 +208,7 @@ function Checkout() {
                   {editPhone ? (
                     <>
                       <input
-                        value={phone ? phone : ''}
+                        value={phone ? phone : userGlobal?.phone_number}
                         type="text"
                         placeholder="Type here"
                         className="input input-bordered input-sm w-36 max-w-xs mr-4"
@@ -224,7 +232,11 @@ function Checkout() {
                     </>
                   ) : (
                     <>
-                      <span className="w-36">{phone ? phone : '-'}</span>
+                      <span className="w-36">
+                        {userGlobal?.phone_number
+                          ? userGlobal.phone_number
+                          : '-'}
+                      </span>
                       <FiEdit
                         size={24}
                         color="#0EA5E9"
@@ -264,14 +276,15 @@ function Checkout() {
                       >
                         Add Address
                       </label>
-
-                      <label
-                        htmlFor="modal-change-address"
-                        href="#modal-change-address"
-                        className="btn btn-sm"
-                      >
-                        Change Address
-                      </label>
+                      {addressList?.length > 1 && (
+                        <label
+                          htmlFor="modal-change-address"
+                          href="#modal-change-address"
+                          className="btn btn-sm"
+                        >
+                          Change Address
+                        </label>
+                      )}
                     </div>
                   )}
                 </div>

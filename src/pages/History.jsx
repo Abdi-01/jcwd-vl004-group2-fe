@@ -82,7 +82,7 @@ const History = () => {
     return () => {
       dispatch({ type: 'ALERT_CLEAR', payload: 'history' });
     };
-  }, [userGlobal, view, currentPage, selectedDates]);
+  }, [view, currentPage, selectedDates]);
 
   const renderInvoices = () => {
     return invoices.map((invoice) => <HistoryCard key={invoice.id} invoice={invoice} userId={userGlobal.id} />);

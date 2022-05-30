@@ -4,25 +4,24 @@ import Axios from 'axios';
 import { API_URL } from '../assets/constants';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { AiFillStar, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdOutlineNoAccounts } from 'react-icons/md';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 
-const DeleteAdminModal = ({ adminId, online, setOpenMain, setAdmins, setMaxPage, setTotalAdmins, limit }) => {
+const DeleteAdminModal = ({ adminId, setOpenMain, setAdmins, setMaxPage, setTotalAdmins, limit, currentPage }) => {
+  const adminToken = localStorage.getItem('adminToken');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const adminGlobal = useSelector((state) => state.adminReducer);
 
   return (
     <>
       <button
-        disabled={adminGlobal.id === adminId || online}
         onClick={() => setOpen(true)}
         className="w-full h-12 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 disabled:from-red-300 disabled:to-rose-300 flex justify-center items-center gap-1 text-lg font-bold text-white cursor-pointer hover:brightness-125 disabled:hover:brightness-100 active:scale-95 disabled:active:scale-100 transition-all disabled:cursor-default"
       >
         <MdOutlineNoAccounts />
-        <span>Delete Account</span>
+        <span>Deactivate Account</span>
       </button>
 
       <Transition appear show={open} as={Fragment}>
@@ -48,17 +47,17 @@ const DeleteAdminModal = ({ adminId, online, setOpenMain, setAdmins, setMaxPage,
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-80 scale-100 -translate-y-5"
           >
-            <div className="fixed w-[530px] bg-sky-50 rounded-xl flex flex-col px-10 shadow-md">
-              <div className="pt-6 flex justify-center">
-                <span className="text-xl font-bold">Are you sure you want to delete this account?</span>
+            <div className="fixed w-[550px] py-6 bg-sky-50 rounded-xl flex flex-col px-10 shadow-md">
+              <div className="flex justify-center">
+                <span className="text-xl font-bold">Are you sure you want to deactivate this account?</span>
               </div>
               <div className="w-full py-5 flex justify-center">
-                <span className="font-semibold">Once you've deleted this account, this action is irreversible</span>
+                <span className="font-semibold">Once you've deactivate this account, you need to manually reactivate it</span>
               </div>
-              <div className="w-full pb-6 pt-2 flex justify-end items-center gap-2">
+              <div className="w-full flex justify-end items-center gap-3">
                 <button
                   onClick={() => setOpen(false)}
-                  className="h-10 w-32 rounded-full bg-gradient-to-r from-red-500 to-rose-400 hover:brightness-125 font-bold text-white active:scale-95 transition"
+                  className="py-3 w-32 rounded-full bg-gradient-to-r from-red-500 to-rose-400 hover:brightness-125 font-bold text-white active:scale-95 transition"
                 >
                   Cancel
                 </button>
@@ -68,23 +67,40 @@ const DeleteAdminModal = ({ adminId, online, setOpenMain, setAdmins, setMaxPage,
                     try {
                       setLoading(true);
 
-                      const response = await Axios.post(`${API_URL}/admin/account/delete/${adminId}`, { limit });
+                      const response = await Axios.post(
+                        `${API_URL}/admin/account/delete/${adminId}`,
+                        {
+                          limit: limit,
+                          currentPage: currentPage,
+                        },
+                        {
+                          headers: {
+                            Authorization: `Bearer ${adminToken}`,
+                          },
+                        }
+                      );
 
-                      setAdmins(response.data.rows);
-                      setMaxPage(response.data.maxPage);
-                      setTotalAdmins(response.data.totalAdmins);
-                      setLoading(false);
+                      if (response.data.conflict) {
+                        setLoading(false);
+                        toast.error(response.data.message, { position: 'bottom-left', theme: 'colored' });
+                        setOpen(false);
+                      } else {
+                        setAdmins(response.data.rows);
+                        setMaxPage(response.data.maxPage);
+                        setTotalAdmins(response.data.totalAdmins);
+                        setLoading(false);
 
-                      toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
-                      setOpen(false);
-                      setOpenMain(false);
+                        toast.info(response.data.message, { position: 'bottom-left', theme: 'colored' });
+                        setOpen(false);
+                        setOpenMain(false);
+                      }
                     } catch (error) {
                       setLoading(false);
 
                       toast.error('Unable to delete Admin Account', { position: 'bottom-left', theme: 'colored' });
                     }
                   }}
-                  className="h-10 w-32 rounded-full bg-gradient-to-r from-emerald-500 disabled:from-emerald-300 to-green-400 disabled:to-green-300 hover:brightness-125 disabled:hover:brightness-100 font-bold text-white active:scale-95 disabled:active:scale-100 transition flex justify-center items-center gap-2"
+                  className="py-3 w-32 rounded-full bg-gradient-to-r from-emerald-500 disabled:from-emerald-300 to-green-400 disabled:to-green-300 hover:brightness-125 disabled:hover:brightness-100 font-bold text-white active:scale-95 disabled:active:scale-100 transition flex justify-center items-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -104,7 +120,7 @@ const DeleteAdminModal = ({ adminId, online, setOpenMain, setAdmins, setMaxPage,
   );
 };
 
-const AdminList = ({ admin, online, setAdmins, setMaxPage, setTotalAdmins, limit }) => {
+const AdminList = ({ admin, online, setAdmins, setMaxPage, setTotalAdmins, limit, currentPage }) => {
   const [openMain, setOpenMain] = useState(false);
 
   return (
@@ -116,14 +132,14 @@ const AdminList = ({ admin, online, setAdmins, setMaxPage, setTotalAdmins, limit
         <div className="w-[7%] flex justify-center items-center">
           <span className="font-bold text-gray-600">{admin.id}</span>
         </div>
-        <div className="w-[20%] pl-2 flex items-center">
-          <span className="font-semibold text-gray-600">{admin.name}</span>
+        <div className="w-[20%] px-2 flex items-center">
+          <span className="font-semibold text-gray-600 truncate">{admin.name}</span>
         </div>
-        <div className="w-[29%] pl-2 flex items-center">
-          <span className="font-semibold text-gray-600">{admin.email}</span>
+        <div className="w-[29%] px-2 flex items-center">
+          <span className="font-semibold text-gray-600 truncate">{admin.email}</span>
         </div>
-        <div className="w-[21%] pl-2 flex items-center">
-          <span className="font-semibold text-gray-600">{admin.username}</span>
+        <div className="w-[21%] px-2 flex items-center">
+          <span className="font-semibold text-gray-600 truncate">{admin.username}</span>
         </div>
         <div className="w-[13%] flex justify-center items-center">
           <div className="h-16 w-16 rounded-full bg-sky-200 flex justify-center items-center">
@@ -184,7 +200,18 @@ const AdminList = ({ admin, online, setAdmins, setMaxPage, setTotalAdmins, limit
                   <span className="text-2xl font-bold bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">
                     {admin.name}
                   </span>
-                  <span className="font-bold text-gray-500 text-opacity-80">Admin #{admin.id}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-gray-500 text-opacity-80">Admin #{admin.id}</span>
+                    {admin.is_super && (
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-gray-500 text-opacity-80">|</span>
+                        <span className="font-bold text-gray-500 text-opacity-80">
+                          <AiFillStar />
+                        </span>
+                        <span className="font-bold text-gray-500 text-opacity-80">Super Admin</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-center">
                   <div className="w-20 h-20 rounded-full flex justify-center items-center bg-gradient-to-r from-sky-400 to-emerald-400">
@@ -216,15 +243,18 @@ const AdminList = ({ admin, online, setAdmins, setMaxPage, setTotalAdmins, limit
                   <span className="text-xl leading-7 font-bold text-gray-700">{format(new Date(admin.createdAt), 'PPP')}</span>
                 </div>
               </div>
-              <DeleteAdminModal
-                adminId={admin.id}
-                setOpenMain={setOpenMain}
-                setAdmins={setAdmins}
-                setMaxPage={setMaxPage}
-                setTotalAdmins={setTotalAdmins}
-                limit={limit}
-                online={online}
-              />
+              {!admin.is_super ? (
+                <DeleteAdminModal
+                  adminId={admin.id}
+                  setOpenMain={setOpenMain}
+                  setAdmins={setAdmins}
+                  setMaxPage={setMaxPage}
+                  setTotalAdmins={setTotalAdmins}
+                  limit={limit}
+                  currentPage={currentPage}
+                  online={online}
+                />
+              ) : null}
             </div>
           </Transition.Child>
         </Dialog>

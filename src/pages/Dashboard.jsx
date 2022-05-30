@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,17 +12,18 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const adminGlobal = useSelector((state) => state.adminReducer);
   const socket = useSelector((state) => state.socket.instance);
+  const adminToken = localStorage.getItem('adminToken');
+  const userToken = localStorage.getItem('userToken');
 
   useEffect(() => {
-    const adminToken = localStorage.getItem('adminToken');
-    const userToken = localStorage.getItem('userToken');
-
     if (userToken) {
       navigate('/', { replace: true });
     } else if (!adminToken) {
-      navigate('/admin/login');
+      navigate('/admin/login', { replace: true });
+    } else if (!adminGlobal.id) {
+      navigate('/admin/login', { replace: true });
     }
-  }, []);
+  }, [adminGlobal]);
 
   useEffect(() => {
     if (adminGlobal.id) {

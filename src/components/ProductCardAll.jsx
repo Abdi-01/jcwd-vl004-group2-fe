@@ -32,25 +32,38 @@ const ProductCardAll = ({ view, product }) => {
         const response = await Axios.post(`${API_URL}/cart/add`, {
           userId: userGlobal.id,
           productId: product.id,
-          quantity: product.volume,
+          quantity: product.stock ? product.volume : product.stock_in_unit,
         });
 
-        if (response.data.conflict) {
+        if (response.data.deleted) {
+          setCartLoading(false);
+
+          toast.warning(response.data.message, { theme: 'colored', position: 'top-center' });
+        } else if (response.data.conflict) {
           setCartLoading(false);
 
           toast.warning(response.data.message, { theme: 'colored', position: 'bottom-left' });
         } else {
+          if (response.data.cartTotal) {
+            dispatch({ type: 'CART_TOTAL', payload: response.data.cartTotal });
+          }
+
           setCartLoading(false);
 
-          dispatch({ type: 'CART_TOTAL', payload: response.data.cartTotal });
-
-          toast.success(`Added ${product.volume?.toLocaleString('id')} ${product.unit} to your cart!`, {
-            position: 'bottom-left',
-            theme: 'colored',
-          });
+          toast.success(
+            `Added ${product.stock ? product.volume?.toLocaleString('id') : product.stock_in_unit?.toLocaleString('id')}${
+              product.unit
+            } to your cart!`,
+            {
+              position: 'bottom-left',
+              theme: 'colored',
+            }
+          );
         }
       }
     } catch (error) {
+      setCartLoading(false);
+
       toast.error('Unable to add this item to your cart!', { theme: 'colored', position: 'bottom-left' });
     }
   };
@@ -81,7 +94,7 @@ const ProductCardAll = ({ view, product }) => {
               <img src={`${API_URL}/${product.image}`} className="w-full hover:scale-105 object-contain transition" />
             </div>
           </div>
-          <div className="w-full h-3/5 flex flex-col pb-2 px-2">
+          <div className="w-full h-3/5 flex flex-col pb-3 px-2">
             <div onClick={() => navigate(`/product/${product.id}`)} className="w-full h-[80%] flex flex-col">
               <span className="text-sm font-light text-slate-400">{product.category.name}</span>
               <div className="w-full flex items-center">
@@ -128,7 +141,7 @@ const ProductCardAll = ({ view, product }) => {
                 <button
                   onClick={addToCart}
                   disabled={cartLoading}
-                  className="w-full h-full rounded-md mt-auto mx-auto bg-gradient-to-r from-sky-400 to-sky-600 text-white font-bold hover:brightness-110 cursor-pointer transition active:scale-95 text-sm gap-2 flex justify-center items-center shadow disabled:from-sky-300 disabled:to-sky-500 disabled:active:scale-100"
+                  className="w-full h-full rounded-md mt-auto bg-gradient-to-r from-sky-400 to-sky-600 text-white font-bold hover:brightness-110 cursor-pointer transition active:scale-95 text-sm gap-2 flex justify-center items-center shadow disabled:from-sky-300 disabled:to-sky-500 disabled:active:scale-100"
                 >
                   {cartLoading ? (
                     <>

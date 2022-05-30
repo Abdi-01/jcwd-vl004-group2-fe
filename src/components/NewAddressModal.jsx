@@ -6,13 +6,14 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
 import '../assets/styles/NewAddressModal.css';
-import { AiOutlineClose, AiOutlineInfoCircle } from 'react-icons/ai';
+import { AiOutlineClose, AiOutlineInfoCircle, AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { MdOutlineAddLocationAlt } from 'react-icons/md';
 import { Dialog, Transition } from '@headlessui/react';
 import { toast } from 'react-toastify';
 
 const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage, limit, setTotalAddress, totalAddress }) => {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -33,6 +34,8 @@ const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
+        setLoading(true);
+
         const response = await Axios.post(
           `${API_URL}/address/add`,
           { data: { ...values, postalcode: parseInt(values.postalcode) }, limit, currentPage },
@@ -43,6 +46,11 @@ const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage
           }
         );
 
+        if (response.data.conflict) {
+          setLoading(false);
+          return toast.warning(response.data.conflict, { position: 'bottom-left', theme: 'colored' });
+        }
+
         setAddresses(response.data.rows);
         setMaxPage(response.data.maxPage);
         setTotalAddress(response.data.count);
@@ -51,8 +59,9 @@ const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage
           setCurrentPage(1);
         }
 
-        setOpen(false);
         resetForm();
+        setLoading(false);
+        setOpen(false);
         toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
       } catch (error) {
         toast.error('Unable to add address!', { position: 'bottom-left', theme: 'colored' });
@@ -64,10 +73,11 @@ const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage
     <>
       <button
         onClick={() => setOpen(true)}
-        className="h-10 w-32 rounded-lg bg-gradient-to-r from-sky-300 to-emerald-400 font-bold text-white flex justify-center items-center gap-1 focus:outline-none active:scale-95 transition"
+        disabled={totalAddress === 10}
+        className="h-10 w-32 rounded-lg bg-gradient-to-r from-sky-300 to-emerald-400 font-bold text-white flex justify-center items-center gap-1 focus:outline-none active:scale-95 transition disabled:from-gray-200 disabled:to-gray-300 disabled:scale-100"
       >
         <MdOutlineAddLocationAlt />
-        Address
+        {totalAddress === 10 ? 'Max' : 'Address'}
       </button>
 
       <Transition appear show={open} as={Fragment}>
@@ -257,9 +267,17 @@ const NewAddressModal = ({ setAddresses, setMaxPage, setCurrentPage, currentPage
                   <div className="flex justify-center">
                     <button
                       type="submit"
-                      className="py-3 px-5 rounded-xl font-bold text-white bg-gradient-to-r from-sky-400 to-emerald-400 active:scale-95 transition hover:brightness-110"
+                      disabled={loading}
+                      className={`py-3 px-5 rounded-xl font-bold text-white bg-gradient-to-r from-sky-400 to-emerald-400 active:scale-95 transition hover:brightness-110 disabled:from-sky-300 disabled:to-emerald-300 disabled:active:scale-100 disabled:hover:brightnes-100 flex items-center justify-center gap-2`}
                     >
-                      Add Address
+                      {loading ? (
+                        <>
+                          <AiOutlineLoading3Quarters className="animate-spin" />
+                          Creating..
+                        </>
+                      ) : (
+                        'Add Address'
+                      )}
                     </button>
                   </div>
                 </div>

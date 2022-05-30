@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Axios from 'axios';
 import { API_URL } from '../assets/constants';
+import { debounce } from 'throttle-debounce';
 
 import AdminList from '../components/AdminList';
 import { BsArrowDownUp } from 'react-icons/bs';
@@ -10,12 +11,14 @@ import { GoChevronLeft, GoChevronRight } from 'react-icons/go';
 import { RiAdminFill, RiAdminLine } from 'react-icons/ri';
 import { toast } from 'react-toastify';
 import NewAdminModal from '../components/NewAdminModal';
-import { AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { AiOutlineLoading3Quarters, AiOutlineClose } from 'react-icons/ai';
+import { FaSearch } from 'react-icons/fa';
 
 const DashboardAdmin = () => {
+  const navigate = useNavigate();
+  const dataAdmin = JSON.parse(localStorage.getItem('dataAdmin'));
+  const adminToken = localStorage.getItem('adminToken');
   const socket = useSelector((state) => state.socket.instance);
-  const { search } = useLocation();
-  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [onlineAdmins, setOnlineAdmins] = useState([]);
   const [admins, setAdmins] = useState([]);
@@ -23,7 +26,21 @@ const DashboardAdmin = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [maxPage, setMaxPage] = useState(0);
   const [sort, setSort] = useState('');
-  const limit = 10;
+  const [search, setSearch] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const limit = 5;
+
+  const debouncedKeyword = useCallback(
+    debounce(1000, (val) => {
+      setKeyword(val);
+      setCurrentPage(1);
+    }),
+    []
+  );
+
+  useEffect(() => {
+    debouncedKeyword(search);
+  }, [search]);
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -38,30 +55,48 @@ const DashboardAdmin = () => {
           return;
         }
 
-        if (searchParams.get('keyword')) {
-          query.keyword = searchParams.get('keyword');
-        }
-
         if (sort) {
           query.sort = sort;
         }
 
         setLoading(true);
 
-        const response = await Axios.post(`${API_URL}/admin/account/all`, query);
+        const response = await Axios.post(`${API_URL}/admin/account/all?keyword=${keyword}`, query, {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+          },
+        });
 
         setAdmins(response.data.rows);
-        setMaxPage(response.data.maxPage || 1);
-        setTotalAdmins(response.data.totalAdmins);
+        setMaxPage(response.data.maxPage);
+        if (!keyword) {
+          setTotalAdmins(response.data.totalAdmins);
+        }
         setLoading(false);
       } catch (err) {
         setLoading(false);
 
-        toast.error('Unable to fetch Admins!', { position: 'bottom-left', theme: 'colored' });
+        toast.error('Unable to fetch Admins!', {
+          position: 'bottom-left',
+          theme: 'colored',
+        });
       }
     };
-    fetchAdmins();
-  }, [currentPage, search, sort]);
+
+    if (!dataAdmin.is_super) {
+      navigate('/dashboard', { replace: true });
+    } else {
+      fetchAdmins();
+    }
+  }, [currentPage, sort, keyword]);
+
+  useEffect(() => {
+    if (currentPage === 1) {
+      return;
+    } else if (totalAdmins <= currentPage * limit - limit) {
+      setCurrentPage(currentPage - 1);
+    }
+  }, [totalAdmins]);
 
   useEffect(() => {
     socket?.emit('getOnlineAdmin');
@@ -89,12 +124,32 @@ const DashboardAdmin = () => {
         setMaxPage={setMaxPage}
         setTotalAdmins={setTotalAdmins}
         limit={limit}
+        currentPage={currentPage}
       />
     ));
   };
 
   return (
     <div className="h-full flex flex-col px-10">
+      <div className="h-16 bg-white shadow-sm pl-80 pr-8 fixed z-[12] w-10 top-0 left-0 flex items-center">
+        <div className="flex justify-center items-center relative">
+          <FaSearch className="absolute left-2 text-gray-400 bg-gray-100 cursor-pointer active:scale-95 transition" />
+          <input
+            type="text"
+            id="myInput"
+            value={search}
+            placeholder="Search..."
+            onChange={(e) => setSearch(e.target.value)}
+            className="search block w-72 shadow border-none rounded-3x1 focus:outline-none py-2 bg-gray-100 text-base text-gray-600 pl-11 pr-7"
+          />
+          <AiOutlineClose
+            onClick={() => {
+              setSearch('');
+            }}
+            className="hover:brightness-110 cursor-pointer absolute right-2"
+          />
+        </div>
+      </div>
       <div className="flex flex-col justify-center py-4">
         <span className="text-3xl font-bold leading-10 bg-gradient-to-r from-sky-400 to-emerald-300 bg-clip-text text-transparent mb-1">
           Admins
@@ -157,10 +212,10 @@ const DashboardAdmin = () => {
                   className="text-xs hover:text-sky-300 transition cursor-pointer active:scale-95"
                 />
               </div>
-              <div className="w-[13%] pl-2 flex items-center gap-1 text-gray-600">
+              <div className="w-[13%] pl-2 flex items-center justify-center text-gray-600">
                 <span className="text-sm font-semibold">Profile Pic</span>
               </div>
-              <div className="w-[10%] flex justify-center items-center gap-1 text-gray-600">
+              <div className="w-[10%] flex justify-center items-center text-gray-600">
                 <span className="text-sm font-semibold">Status</span>
               </div>
             </div>
@@ -179,13 +234,16 @@ const DashboardAdmin = () => {
               renderAdmins()
             ) : (
               <div className="h-96 flex justify-center items-center">
-                <span className="text-2xl font-thin text-slate-800">You currently don't have any admin</span>
+                <span className="text-2xl font-thin text-slate-800">
+                  {keyword ? `No admin found..` : `You currently don't have any admin`}
+                </span>
               </div>
             )}
           </div>
           <div className="w-full py-2 flex justify-center items-center border-t gap-2 text-gray-600 font-semibold">
             <button
               disabled={currentPage === 1 || !currentPage}
+              onClick={() => setCurrentPage(currentPage - 1)}
               className="hover:text-sky-400 disabled:text-gray-300 active:scale-95 disabled:active:scale-100 transition"
             >
               <GoChevronLeft />
@@ -206,6 +264,7 @@ const DashboardAdmin = () => {
             <span>{maxPage}</span>
             <button
               disabled={currentPage === maxPage || !currentPage}
+              onClick={() => setCurrentPage(currentPage + 1)}
               className="hover:text-sky-400 disabled:text-gray-300 active:scale-95 disabled:active:scale-100 transition"
             >
               <GoChevronRight />
@@ -239,7 +298,13 @@ const DashboardAdmin = () => {
               </div>
             </div>
             <div className="w-full pb-4">
-              <NewAdminModal setAdmins={setAdmins} setMaxPage={setMaxPage} setTotalAdmins={setTotalAdmins} limit={limit} />
+              <NewAdminModal
+                setAdmins={setAdmins}
+                setMaxPage={setMaxPage}
+                setTotalAdmins={setTotalAdmins}
+                limit={limit}
+                currentPage={currentPage}
+              />
             </div>
           </div>
         </div>
