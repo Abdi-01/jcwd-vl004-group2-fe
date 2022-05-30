@@ -13,7 +13,7 @@ import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
 
 function Home() {
-  const [newArrivals, setNewArrivals] = useState([]);
+  const [best, setBest] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -21,9 +21,10 @@ function Home() {
         const response = await Axios.post(`${API_URL}/product/query`, {
           limit: 10,
           fromHome: true,
+          sort: 'total_sales,DESC',
         });
 
-        setNewArrivals(response.data.products);
+        setBest(response.data.products);
       } catch (err) {
         toast.error(`Unable to fetch New Arrivals!`, { position: 'bottom-left', theme: 'colored' });
       }
@@ -39,7 +40,7 @@ function Home() {
       <Logos />
       <Features />
       <Categories />
-      <ProductGrid header={'New Arrivals'} productList={newArrivals} newarrivalBadge navigateTo={'/products/all'} />
+      <ProductGrid header={'Best Seller'} productList={best} bestsellerBadge navigateTo={'/products/all'} />
       <Footer />
     </>
   );

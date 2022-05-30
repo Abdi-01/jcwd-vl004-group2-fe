@@ -104,10 +104,6 @@ const AllProductsSidebar = ({
       <button
         onClick={() => {
           setOpen(true);
-
-          if (rangeError) {
-            setRangeError('');
-          }
         }}
         className="ml-auto text-lg text-slate-700 hover:text-sky-500 transition cursor-pointer active:scale-95 lg:hidden"
       >
@@ -171,9 +167,12 @@ const AllProductsSidebar = ({
                     setMaxPrice('');
                     setPriceRange([]);
                     setCurrentPage(1);
+                    if (rangeError) {
+                      setRangeError('');
+                    }
                   }}
                   className={`px-2 rounded-full flex gap-1 items-center bg-rose-100 text-xs md:text-sm text-red-400 hover:brightness-105 transition cursor-pointer ${
-                    minPrice || maxPrice ? 'opacity-100' : 'opacity-0 invisible'
+                    minPrice || maxPrice || rangeError ? 'opacity-100' : 'opacity-0 invisible'
                   }`}
                 >
                   <AiOutlineClose />
@@ -229,6 +228,7 @@ const AllProductsSidebar = ({
                       }
 
                       setPriceRange(range);
+                      setCurrentPage(1);
                       setOpen(false);
                     }}
                     className="h-9 w-full rounded-lg bg-sky-400 text-white font-semibold cursor-pointer hover:brightness-110 transition"

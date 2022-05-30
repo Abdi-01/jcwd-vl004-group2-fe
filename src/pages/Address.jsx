@@ -13,7 +13,7 @@ const Address = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [maxPage, setMaxPage] = useState(1);
   const [totalAddress, setTotalAddress] = useState(0);
-  const limit = 6;
+  const limit = 5;
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -95,7 +95,7 @@ const Address = () => {
             renderAddresses()
           ) : (
             <div className="w-full h-[60vh] flex items-center justify-center">
-              <span className="text-3xl font-thin text-sky-300">You havent't filled out your address</span>
+              <span className="text-3xl font-thin text-sky-300">You haven't filled out your address</span>
             </div>
           )}
         </div>

@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Axios from 'axios';
 import { API_URL, SOCKET_URL } from './assets/constants';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 
@@ -62,14 +62,22 @@ function App() {
           }
         );
 
-        dispatch({ type: 'AUTH_ADMIN', payload: adminresponse.data.data });
+        if (adminresponse.data.conflict) {
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('dataAdmin');
+          dispatch({ type: 'ADMIN_LOGOUT' });
 
-        dispatch({
-          type: 'SET_SOCKET',
-          payload: io(SOCKET_URL),
-        });
+          toast.error(adminresponse.data.message, { position: 'top-center', theme: 'colored' });
+        } else {
+          dispatch({ type: 'AUTH_ADMIN', payload: adminresponse.data.data });
 
-        return;
+          dispatch({
+            type: 'SET_SOCKET',
+            payload: io(SOCKET_URL),
+          });
+
+          return;
+        }
       } else if (userToken) {
         response = await Axios.get(`${API_URL}/auth/persistent`, {
           headers: {
@@ -84,6 +92,10 @@ function App() {
 
       if (response.data.ignore) {
         return;
+      } else if (response.data.conflict) {
+        localStorage.removeItem('userToken');
+
+        toast.warning(response.data.message, { position: 'top-center', theme: 'colored' });
       } else {
         localStorage.setItem('userToken', response.data.token);
 

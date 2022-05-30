@@ -3,16 +3,18 @@ import Axios from 'axios';
 import { API_URL } from '../assets/constants';
 
 import { Dialog, Transition } from '@headlessui/react';
-import { AiOutlineUserAdd, AiOutlineInfoCircle, AiOutlineLoading3Quarters } from 'react-icons/ai';
+import { AiOutlineUserAdd, AiOutlineInfoCircle, AiOutlineLoading3Quarters, AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { MdAdminPanelSettings } from 'react-icons/md';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-toastify';
 
-const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
+const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit, currentPage }) => {
+  const adminToken = localStorage.getItem('adminToken');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   const formik = useFormik({
     initialValues: {
@@ -25,10 +27,10 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
     },
     validationSchema: Yup.object({
       name: Yup.string()
-        .matches(/^[a-zA-Z0-9 ]*$/, 'Name cannot contain special characters')
+        .matches(/^[a-zA-Z. ]*$/, 'Name cannot contain special characters or numbers')
         .required('This field is required'),
       username: Yup.string()
-        .matches(/^[a-zA-Z0-9._]*$/, 'Only alphanumeric characters, contain no spaces, (-), (_), and (.) is allowed')
+        .matches(/^[a-zA-Z0-9._]*$/, 'Only alphanumeric characters, (-), (_), (.) is allowed and no spaces')
         .required('This field is required'),
       email: Yup.string().email('Please enter a valid email address').required('This field is required'),
       password: Yup.string()
@@ -46,18 +48,27 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
       try {
         setLoading(true);
 
-        const response = await Axios.post(`${API_URL}/admin/account/create`, { data: values, limit });
+        const response = await Axios.post(
+          `${API_URL}/admin/account/create`,
+          { data: values, limit: limit, currentPage: currentPage },
+          {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+            },
+          }
+        );
 
         if (response.data.conflict) {
+          setLoading(false);
           toast.error(response.data.conflict, { theme: 'colored', position: 'bottom-left' });
         } else {
-          setLoading(false);
-
           formik.resetForm();
           setAdmins(response.data.rows);
           setMaxPage(response.data.maxPage);
           setTotalAdmins(response.data.totalAdmins);
+          setShowPass(false);
           toast.success(response.data.message, { theme: 'colored', position: 'bottom-left' });
+          setLoading(false);
           setOpen(false);
         }
       } catch (err) {
@@ -112,10 +123,10 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                 <div className="w-full flex flex-col p-4 bg-white ring ring-emerald-200 rounded-xl">
                   <div className="flex h-[98px] gap-5">
                     <div className="w-full flex flex-col">
-                      <label htmlFor="name" className="text-xl font-thin text-sky-400 mb-1 cursor-pointer leading-tight">
+                      <label htmlFor="name" className="text-xl font-thin text-sky-500 mb-1 cursor-pointer leading-tight">
                         Name:
                       </label>
-                      <div className="w-full relative flex">
+                      <div className="w-full relative flex items-center">
                         <input
                           id="name"
                           type="text"
@@ -124,11 +135,11 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className={`h-10 w-full px-3 rounded-lg focus:outline-none ${
-                            formik.touched.name && formik.errors.name ? 'border-red-300' : 'border-sky-200'
+                            formik.touched.name && formik.errors.name ? 'border-red-300' : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.name && formik.errors.name ? (
-                          <AiOutlineInfoCircle className={`absolute top-3 right-2 text-red-400`} />
+                          <AiOutlineInfoCircle className={`absolute right-2 text-red-400`} />
                         ) : null}
                       </div>
                       {formik.touched.name && formik.errors.name ? (
@@ -139,7 +150,7 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                       <label htmlFor="username" className="text-xl font-thin text-sky-400 mb-1 cursor-pointer leading-tight">
                         Username:
                       </label>
-                      <div className="w-full relative flex">
+                      <div className="w-full relative flex items-center">
                         <input
                           id="username"
                           type="text"
@@ -148,25 +159,24 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className={`h-10 w-full px-3 rounded-lg focus:outline-none ${
-                            formik.touched.username && formik.errors.username ? 'border-red-300' : 'border-sky-200'
+                            formik.touched.username && formik.errors.username ? 'border-red-300' : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.username && formik.errors.username ? (
-                          <AiOutlineInfoCircle className={`absolute top-3 right-2 text-red-400`} />
+                          <AiOutlineInfoCircle className={`absolute right-2 text-red-400`} />
                         ) : null}
                       </div>
                       {formik.touched.username && formik.errors.username ? (
-                        <span className="pl-1 text-xs leading-tight text-red-400 mt-1 max-w-full">{formik.errors.username}</span>
+                        <span className="pl-1 text-[11px] leading-tight text-red-400 mt-1 max-w-full">{formik.errors.username}</span>
                       ) : null}
                     </div>
                   </div>
-
                   <div className="flex h-[98px] gap-5">
                     <div className="w-full flex flex-col">
-                      <label htmlFor="email" className="text-xl font-thin text-sky-400 mb-[2px] cursor-pointer leading-tight">
+                      <label htmlFor="email" className="text-xl font-thin text-sky-500 mb-[2px] cursor-pointer leading-tight">
                         Email:
                       </label>
-                      <div className="w-full relative flex">
+                      <div className="w-full relative flex items-center">
                         <input
                           id="email"
                           type="text"
@@ -175,11 +185,11 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className={`h-10 w-full px-3 rounded-lg focus:outline-none ${
-                            formik.touched.email && formik.errors.email ? 'border-red-300' : 'border-sky-200'
+                            formik.touched.email && formik.errors.email ? 'border-red-300' : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.email && formik.errors.email ? (
-                          <AiOutlineInfoCircle className={`absolute top-3 right-2 text-red-400`} />
+                          <AiOutlineInfoCircle className={`absolute right-2 text-red-400`} />
                         ) : null}
                       </div>
                       {formik.touched.email && formik.errors.email ? (
@@ -190,7 +200,7 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                       <label htmlFor="phone_number" className="text-xl font-thin text-sky-400 mb-[2px] leading-tight cursor-pointer">
                         Phone:
                       </label>
-                      <div className="w-full relative flex">
+                      <div className="w-full relative flex items-center">
                         <input
                           id="phone_number"
                           type="tel"
@@ -199,11 +209,13 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className={`h-10 w-full px-3 rounded-lg focus:outline-none ${
-                            formik.touched.phone_number && formik.errors.phone_number ? 'border-red-300' : 'border-sky-200'
+                            formik.touched.phone_number && formik.errors.phone_number
+                              ? 'border-red-300'
+                              : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.phone_number && formik.errors.phone_number ? (
-                          <AiOutlineInfoCircle className={`absolute top-3 right-2 text-red-400`} />
+                          <AiOutlineInfoCircle className={`absolute right-2 text-red-400`} />
                         ) : null}
                       </div>
                       {formik.touched.phone_number && formik.errors.phone_number ? (
@@ -216,7 +228,20 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                       <label htmlFor="password" className="text-xl font-thin text-sky-400 mb-[2px] leading-tight cursor-pointer">
                         Password:
                       </label>
-                      <div className="w-full relative flex">
+                      <div className="w-full relative flex items-center">
+                        <span
+                          onClick={() => {
+                            if (document.getElementById('password').type === 'password') {
+                              document.getElementById('password').type = 'text';
+                            } else {
+                              document.getElementById('password').type = 'password';
+                            }
+                            setShowPass(!showPass);
+                          }}
+                          className="absolute left-3 text-sky-300 cursor-pointer hover:brightness-110 transition"
+                        >
+                          {showPass ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                        </span>
                         <input
                           id="password"
                           type="password"
@@ -224,12 +249,12 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           value={formik.values.password}
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
-                          className={`h-10 w-full px-3 rounded-lg focus:outline-none ${
-                            formik.touched.password && formik.errors.password ? 'border-red-300' : 'border-sky-200'
+                          className={`h-10 w-full px-9 rounded-lg focus:outline-none ${
+                            formik.touched.password && formik.errors.password ? 'border-red-300' : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.password && formik.errors.password ? (
-                          <AiOutlineInfoCircle className={`absolute top-3 right-2 text-red-400`} />
+                          <AiOutlineInfoCircle className={`absolute right-2 text-red-400`} />
                         ) : null}
                       </div>
                       {formik.touched.password && formik.errors.password ? (
@@ -248,7 +273,7 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                           onChange={formik.handleChange}
                           onBlur={formik.handleBlur}
                           className={`h-24 w-full px-3 py-1 rounded-lg focus:outline-none ${
-                            formik.touched.address && formik.errors.address ? 'border-red-300' : 'border-sky-200'
+                            formik.touched.address && formik.errors.address ? 'border-red-300' : 'border-sky-200 focus:border-sky-300'
                           } border transition cursor-pointer placeholder:font-semibold placeholder:text-gray-300`}
                         />
                         {formik.touched.address && formik.errors.address ? (
@@ -262,11 +287,12 @@ const NewAdminModal = ({ setAdmins, setMaxPage, setTotalAdmins, limit }) => {
                   </div>
                 </div>
               </form>
-              <div className="flex justify-center gap-2 py-3">
+              <div className="flex justify-center gap-3 py-5">
                 <button
                   onClick={() => {
-                    formik.resetForm();
+                    setShowPass(false);
                     setOpen(false);
+                    formik.resetForm();
                   }}
                   className="h-10 w-32 rounded-lg bg-red-400 hover:brightness-110 font-bold text-white active:scale-95 transition"
                 >

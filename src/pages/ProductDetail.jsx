@@ -45,6 +45,14 @@ const ProductDetail = () => {
           limit: 8,
         });
 
+        if (!response.data.product) {
+          navigate('/products/all', { replace: true });
+          return toast.warning(`This product is currently unavailable`, {
+            position: 'top-center',
+            theme: 'colored',
+          });
+        }
+
         setProductData(response.data.product);
         setRelatedProducts(response.data.relatedProducts);
         setTotalReviews(response.data.product.totalReviews);
@@ -74,7 +82,7 @@ const ProductDetail = () => {
     } else {
       setQtyError('');
     }
-  }, [quantity]);
+  }, [quantity, productData]);
 
   const addToCart = async () => {
     try {
@@ -89,25 +97,41 @@ const ProductDetail = () => {
           quantity,
         });
 
-        if (response.data.conflict) {
+        if (response.data.deleted) {
+          setCartLoading(false);
+
+          navigate('/products/all', { replace: true });
+          toast.warning(response.data.message, { theme: 'colored', position: 'bottom-left' });
+        } else if (response.data.conflict) {
+          if (productData.stock_in_unit !== response.data.productData.stock_in_unit) {
+            setProductData(response.data.productData);
+          }
+
           setCartLoading(false);
 
           toast.warning(response.data.message, { theme: 'colored', position: 'bottom-left' });
         } else {
-          setCartLoading(false);
-
-          toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
-
-          dispatch({ type: 'CART_TOTAL', payload: response.data.cartTotal });
-
-          if (!productData.stock) {
-            setQuantity(productData.stock_in_unit);
-          } else {
-            setQuantity(productData.volume);
+          if (productData.stock_in_unit !== response.data.productData.stock_in_unit) {
+            setProductData(response.data.productData);
           }
+
+          if (!response.data.productData.stock) {
+            setQuantity(response.data.productData.stock_in_unit);
+          } else {
+            setQuantity(response.data.productData.volume);
+          }
+
+          if (response.data.cartTotal) {
+            dispatch({ type: 'CART_TOTAL', payload: response.data.cartTotal });
+          }
+
+          setCartLoading(false);
+          toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
         }
       }
     } catch (error) {
+      setCartLoading(false);
+
       toast.error('Unable to add this item to your cart!', { theme: 'colored', position: 'bottom-left' });
     }
   };
@@ -195,12 +219,12 @@ const ProductDetail = () => {
               <div className="w-full py-[2px] flex items-center">
                 <span className="font-bold">Description</span>
               </div>
-              <div className="w-full h-full rounded-lg flex bg-gray-100 p-1">
-                <span className="text-slate-800">{productData.description}</span>
+              <div className="w-full h-full md:h-max lg:h-full rounded-lg flex bg-gray-100 p-1">
+                <span className="text-slate-800 md:line-clamp-6 lg:line-clamp-none">{productData.description}</span>
               </div>
             </div>
             <div className="w-full h-[130px] gap-2 flex items-center">
-              <div className="w-1/2 h-full flex flex-col text-xs md:text-sm">
+              <div className="w-1/2 h-full flex flex-col text-sm md:text-xs lg:text-sm">
                 <div className="w-full flex items-center border-b mb-1">
                   <span className="font-bold">Details</span>
                 </div>
@@ -220,9 +244,9 @@ const ProductDetail = () => {
                 </div>
               </div>
               <div className="w-1/2 h-full flex flex-col">
-                <div className="w-full flex items-center justify-between border-b text-sm">
+                <div className="w-full flex items-center justify-between border-b text-sm md:text-xs lg:text-sm">
                   <span className="font-bold">Stock</span>
-                  <div className="flex items-center gap-1 font-semibold text-xs xl:text-sm">
+                  <div className="flex items-center gap-1 font-semibold">
                     {productData.stock_in_unit ? (
                       productData.stock_in_unit <= 5 * productData.volume ? (
                         <>
@@ -236,7 +260,7 @@ const ProductDetail = () => {
                       ) : (
                         <>
                           <AiOutlineCheckCircle className="text-sky-400" />
-                          <span>Currently in stock!</span>
+                          <span>In stock!</span>
                         </>
                       )
                     ) : (
@@ -247,7 +271,7 @@ const ProductDetail = () => {
                     )}
                   </div>
                 </div>
-                <div className="w-full flex justify-between items-center my-2">
+                <div className="w-full flex justify-between items-center my-2 text-sm lg:text-base">
                   <div className="flex gap-1">
                     <span className="font-semibold">{productData.stock ? productData.stock.toLocaleString('id') : 0}</span>
                     <span>{productData.unit === 'g' ? 'pack(s)' : 'bottle(s)'}</span>

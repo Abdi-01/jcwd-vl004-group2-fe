@@ -126,9 +126,9 @@ const AwaitingPaymentCard = ({ invoice, setInvoices, setTotalData, currentPage, 
         </div>
       </div>
 
-      <input type="checkbox" id={`cancel-invoice-${invoice.id}`} class="modal-toggle" />
-      <div class="modal">
-        <div class="modal-box p-0">
+      <input type="checkbox" id={`cancel-invoice-${invoice.id}`} className="modal-toggle" />
+      <div className="modal">
+        <div className="modal-box p-0">
           <div className="pt-8 pb-3 flex justify-center">
             <span className="font-bold text-xl">Are sure you want to cancel this transaction?</span>
           </div>

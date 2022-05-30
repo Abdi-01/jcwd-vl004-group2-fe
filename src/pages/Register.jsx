@@ -8,6 +8,7 @@ import { io } from 'socket.io-client';
 import '../assets/styles/Register.css';
 import { FcGoogle } from 'react-icons/fc';
 import { AiOutlineInfoCircle, AiOutlineLoading3Quarters, AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import logo from '../assets/images/logos/hb-white.png';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -40,7 +41,7 @@ const Register = () => {
     },
     validationSchema: Yup.object({
       name: Yup.string()
-        .matches(/^[a-zA-Z0-9 ]*$/, 'Name cannot contain special characters')
+        .matches(/^[a-zA-Z. ]*$/, 'Name cannot contain number or special characters')
         .required('This field is required'),
       email: Yup.string().email('Please enter a valid email address').required('This field is required'),
       password: Yup.string()
@@ -87,15 +88,10 @@ const Register = () => {
 
   return (
     <div className="flex justify-center items-center relative overflow-y-hidden registerBody">
-      <div className="absolute top-1 md:top-5 mx-auto md:left-8">
-        <span
-          className="text-xl md:text-2xl font-bold text-orange-100 hover:brightness-110 cursor-pointer transition"
-          onClick={() => navigate('/')}
-        >
-          Logo Here
-        </span>
+      <div className="absolute top-3 left-3 md:top-5 md:left-8">
+        <img src={logo} className="w-16 md:w-24 font-bold hover:brightness-110 cursor-pointer transition" onClick={() => navigate('/')} />
       </div>
-      <div className="w-[300px] h-[560px] rounded-xl md:rounded-none md:h-full md:w-1/2 lg:w-1/3 lg:pt-1 flex-col items-center shadow-md registerWrapper">
+      <div className="w-[330px] h-[560px] rounded-xl md:rounded-none md:h-full md:w-1/2 lg:w-1/3 lg:pt-1 flex-col items-center shadow-md registerWrapper">
         <div className="w-full flex justify-center py-3 md:py-4">
           <span className="text-lg md:text-[27px] w-max bg-gradient-to-r from-sky-500 to-emerald-500 bg-clip-text text-transparent font-bold">
             Create Account

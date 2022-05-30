@@ -62,7 +62,7 @@ const AddressMenuButton = ({
                       setTotalAddress(response.data.count);
                       setCurrentPage(1);
 
-                      toast.success('Changed this address as your default!', { position: 'bottom-left', theme: 'colored' });
+                      toast.success(response.data.message, { position: 'bottom-left', theme: 'colored' });
                     } catch (err) {
                       toast.error('Unable to update default address!', { position: 'bottom-left', theme: 'colored' });
                     }
@@ -144,7 +144,7 @@ const DeleteAddressModal = ({ id, setAddresses, openDelete, setOpenDelete, curre
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-80 -translate-y-2"
           >
-            <div className="px-10 py-5 z-20 rounded-xl addressCardBody flex flex-col items-center shadow">
+            <div className="px-10 py-1 z-20 rounded-box addressCardBody flex flex-col items-center shadow">
               <div className="w-full py-8 text-xl font-bold bg-gradient-to-r from-sky-500 to-emerald-500 bg-clip-text text-transparent flex justify-center">
                 <span>Are you sure you want to delete this address?</span>
               </div>
@@ -223,7 +223,7 @@ const AddressCard = ({ addressData, setAddresses, currentPage, setCurrentPage, s
         </div>
         <div className="w-full flex flex-col">
           <span className="text-sm font-bold text-sky-500 text-opacity-60">City:</span>
-          <span className="text-slate-700 font-semibold">{address.city}</span>
+          <span className="text-slate-700 font-semibold line-clamp-1">{address.city}</span>
         </div>
         <div>
           {address.is_default && (
@@ -234,7 +234,7 @@ const AddressCard = ({ addressData, setAddresses, currentPage, setCurrentPage, s
       <div className="h-full w-[25%] flex flex-col border-l pl-5 justify-center relative">
         <div className="w-full flex flex-col">
           <span className="text-sm font-bold text-sky-500 text-opacity-60">Province:</span>
-          <span className="text-slate-700 font-semibold">{address.province}</span>
+          <span className="text-slate-700 font-semibold line-clamp-1">{address.province}</span>
         </div>
         <div className="w-full flex flex-col">
           <span className="text-sm font-bold text-sky-500 text-opacity-60">Country:</span>

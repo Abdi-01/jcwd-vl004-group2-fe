@@ -57,7 +57,7 @@ const DeleteReviewModal = ({ productId, reviewId, setTotalReviews, setAvgRating,
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-90 scale-90"
           >
-            <div className="w-2/3 md:w-1/2 lg:w-1/3 flex flex-col bg-sky-50 shadow fixed z-10 rounded-box">
+            <div className="w-2/3 md:w-[45%] lg:w-1/3 xl:w-[27.5%] flex flex-col bg-sky-50 shadow fixed z-10 rounded-box">
               <div className="w-full flex justify-center items-center py-8 px-6">
                 <span className="text-2xl font-bold text-gray-700">Delete your review?</span>
               </div>

@@ -4,7 +4,7 @@ import { API_URL } from '../assets/constants';
 import { FaSearch } from 'react-icons/fa';
 import { AiFillStar, AiFillFire, AiOutlineCheckCircle, AiOutlineCloseCircle } from 'react-icons/ai';
 
-const ProductGridCard = ({ product, newarrival, bestseller }) => {
+const ProductGridCard = ({ product, newarrival }) => {
   const navigate = useNavigate();
 
   const renderStars = (score) => {
@@ -25,7 +25,7 @@ const ProductGridCard = ({ product, newarrival, bestseller }) => {
   };
 
   return (
-    <div className="h-[340px] w-60 md:w-56 flex flex-col justify-center items-center rounded-lg overflow-hidden border relative shadow-md group">
+    <div className="h-[340px] w-52 lg:w-56 flex flex-col justify-center items-center rounded-lg overflow-hidden border relative shadow-md group">
       <div className="absolute z-2 inset-0 bg-gray-600 bg-opacity-0 group-hover:bg-opacity-30 group-hover:backdrop-blur-sm transition-all"></div>
       <div
         onClick={() => navigate(`/product/${product.id}`)}
@@ -48,12 +48,18 @@ const ProductGridCard = ({ product, newarrival, bestseller }) => {
           </span>
           <span className="text-md font-semibold text-sky-500">/{product.unit}</span>
         </div>
-        {product.totalReviews ? (
-          <div className="w-full py-[2px] px-3 flex items-center gap-1 text-sm">
-            <div className="flex text-amber-300">{renderStars(product.avgRating)}</div>
-            <span className="font-semibold text-slate-700">({product.totalReviews})</span>
+        <div className="w-full flex items-center py-[2px] px-3 gap-1">
+          {product.totalReviews ? (
+            <div className="max-w-[50%] flex items-center gap-1 text-sm">
+              <div className="flex text-amber-300">{renderStars(product.avgRating)}</div>
+              <span className="font-semibold text-slate-700">({product.totalReviews})</span>
+              <span className="font-semibold text-slate-300">|</span>
+            </div>
+          ) : null}
+          <div className="max-w-[50%] flex items-center text-sm font-semibold text-gray-700">
+            <span>{product.total_sales} sold</span>
           </div>
-        ) : null}
+        </div>
         <div className="px-3 mb-[2px] flex gap-1 items-center text-sm font-semibold">
           {product.stock_in_unit ? (
             product.stock_in_unit <= 5 * product.volume ? (
@@ -80,10 +86,10 @@ const ProductGridCard = ({ product, newarrival, bestseller }) => {
         </div>
         <div className="w-full py-1 flex gap-1 items-center px-3">
           {newarrival && (
-            <span className="h-6 px-2 rounded-md bg-green-300 text-green-600 flex items-center font-semibold text-xs">New Arrival</span>
+            <span className="h-7 px-2 rounded-lg bg-green-300 text-green-600 flex items-center font-semibold text-xs">New Arrival</span>
           )}
-          {bestseller && (
-            <span className="h-6 px-2 rounded-md bg-amber-200 text-amber-600 flex items-center font-semibold text-xs">Best Seller</span>
+          {product.total_sales > 4 && (
+            <span className="h-7 px-2 rounded-lg bg-sky-200 text-sky-600 flex items-center font-semibold text-xs">Best Seller</span>
           )}
         </div>
       </div>

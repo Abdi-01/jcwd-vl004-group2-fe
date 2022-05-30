@@ -94,9 +94,9 @@ const Header = () => {
                 <AccountButton>{userGlobal.name}</AccountButton>
               ) : (
                 <Link to="/login">
-                  <div className="text-center text-gray-700 hover:text-primary transition relative group">
+                  <div className="text-center text-gray-700 hover:text-primary transition relative flex flex-col items-center">
                     <div className="md:text-2xl mb-1">
-                      <FaUserAlt className="ml-2" />
+                      <FaUserAlt />
                     </div>
                     <div className="text-xs leading-3">Account</div>
                   </div>

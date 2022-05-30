@@ -12,16 +12,8 @@ const EditProduct = () => {
   const [images, setImage] = useState(null);
   const [category, setCategory] = useState();
   const navigate = useNavigate();
-  const [errMsg, setErrMsg] = useState("");
-  const [submitted, setSubmit] = useState(false);
-  const [newName, setNewName] = useState("");
   const [priceBuy, setPriceBuy] = useState("");
-  const [priceSell, setPriceSell] = useState("");
-  const [newStock, setNewStock] = useState("");
   const [unit, setUnit] = useState("");
-  const [newUnit, setNewUnit] = useState("");
-  const [newVolume, setNewVolume] = useState("");
-  const [stockInUnit, setStockInUnit] = useState("");
   const [newAppearance, setNewAppearance] = useState("");
 
   const { id } = useParams();
@@ -34,10 +26,6 @@ const EditProduct = () => {
     setUnit(res.data.product.unit);
     setNewAppearance(res.data.product.appearance);
   };
-
-  console.log(category);
-  console.log(unit);
-  console.log(newAppearance);
 
   const fetchCategories = async () => {
     const res = await axios.get(`${API_URL}/category/all`);
@@ -60,7 +48,6 @@ const EditProduct = () => {
   const price_buy = useRef();
   const price_sell = useRef();
   const stock = useRef();
-  // const unit = useRef();
   const volume = useRef();
   const description = useRef();
   const appearance = useRef();
@@ -75,7 +62,7 @@ const EditProduct = () => {
       price_sell: parseInt(price_sell.current.value),
       stock: parseInt(stock.current.value),
       unit: unit,
-      volume: volume.current.value,
+      volume: parseInt(volume.current.value),
       description: description.current.value,
       appearance: newAppearance,
       categoryId: parseInt(categoryId.current.value),
@@ -88,11 +75,24 @@ const EditProduct = () => {
     }
 
     try {
-      await axios.patch(`${API_URL}/product/edit/${id}`, formData);
-      navigate("/dashboard/product");
       Swal.fire({
-        icon: "success",
-        text: "Product has been edited!",
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, i want to edit it!",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await axios.patch(`${API_URL}/product/edit/${id}`, formData);
+            navigate("/dashboard/product");
+            Swal.fire("Edited!", "Your file has been edited.", "success");
+          } catch (error) {
+            console.log(error);
+          }
+        }
       });
     } catch (error) {
       console.log(error);
@@ -106,7 +106,7 @@ const EditProduct = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-full w-full bg-gray-100">
       <div className="flex items-center justify-between py-7 px-10">
         <h1 className="text-3xl text-gray-700 font-bold">Edit Product</h1>
       </div>
@@ -145,7 +145,7 @@ const EditProduct = () => {
             </div>
             <div className="col-start-2">
               <label htmlFor="file">
-                <div className="py-1 px-6 text-white bg-primary hover:bg-blue-400 transition rounded-xl items-center">
+                <div className="py-1 px-6 text-white bg-primary cursor-pointer hover:bg-blue-400 transition rounded-xl items-center">
                   <div className="flex justify-center items-center">
                     <FaPhotoVideo
                       htmlColor="tomato"
@@ -328,13 +328,12 @@ const EditProduct = () => {
           </div>
           <div className="flex">
             <button className="mt-8 py-2.5 px-6 text-white bg-primary hover:bg-blue-400 transition rounded-xl items-center mr-3">
-              Edit Product
+              Save
             </button>
             <div
               className="mt-8 py-2.5 px-6 text-white bg-red-500 cursor-pointer hover:bg-red-400 transition rounded-xl items-center"
               onClick={() => navigate(-1)}
             >
-              {/* <a href="http://localhost:3000/dashboard/product">Cancel</a> */}
               Cancel
             </div>
           </div>

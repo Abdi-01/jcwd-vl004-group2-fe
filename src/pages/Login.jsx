@@ -58,6 +58,12 @@ const Login = () => {
           return setInvalid('Please check your email or password!');
         }
 
+        if (response.data.conflict) {
+          setIsLoading(false);
+
+          return toast.warning(response.data.message, { position: 'top-center', theme: 'colored' });
+        }
+
         if (response.data.user) {
           setIsLoading(false);
 
@@ -89,7 +95,7 @@ const Login = () => {
         className="text-2xl lg:text-3xl 2xl:text-4xl font-bold text-sky-500 hover:brightness-110 cursor-pointer transition absolute top-[1%] lg:top-[2%] left-[3%] hover:drop-shadow-[0_0px_8px_rgba(232,231,233,1)]"
         onClick={() => navigate('/')}
       >
-        <img src='logo.png' width='300px' alt='logo heizen berg' />
+        <img src="logo.png" width="300px" alt="logo heizen berg" />
       </span>
       <div className="w-5/6 py-2 rounded-xl lg:w-4/6 sm:rounded-r-none shadow-md bg-slate-50 flex flex-col justify-center loginWrapper">
         <div className="w-full py-2 flex justify-center sm:justify-start sm:pl-8 xl:px-10">

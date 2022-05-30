@@ -6,6 +6,7 @@ import { HiOutlineMail } from 'react-icons/hi';
 import { Link, NavLink } from 'react-router-dom';
 
 const SidebarDashboard = () => {
+  const dataAdmin = JSON.parse(localStorage.getItem('dataAdmin'));
   const notification = useSelector((state) => state.notification.alert);
   const history = useSelector((state) => state.notification.history);
 
@@ -30,7 +31,7 @@ const SidebarDashboard = () => {
   };
 
   return (
-    <div className="fixed left-0 top-0 w-40 h-full bg-gray-800 shadow-md z-10">
+    <div className="fixed left-0 top-0 w-40 h-full bg-gray-800 shadow-md z-[14]">
       <Link to="/">
         <div className="text-white font-bold text-base p-5 bg-gray-900 flex flex-col items-center gap-3">
           <img src="/IlLogoWhite.png" alt="Il Logo Heizenberg" className="w-16 2xl:w-[80px]" />
@@ -54,9 +55,11 @@ const SidebarDashboard = () => {
           User
         </DashboardLink>
 
-        <DashboardLink icon={<MdOutlineAdminPanelSettings />} to={'admin'}>
-          Admin
-        </DashboardLink>
+        {dataAdmin?.is_super ? (
+          <DashboardLink icon={<MdOutlineAdminPanelSettings />} to={'admin'}>
+            Admin
+          </DashboardLink>
+        ) : null}
 
         <DashboardLink icon={<HiOutlineMail />} to={'notification'} notification={notification}>
           Notification

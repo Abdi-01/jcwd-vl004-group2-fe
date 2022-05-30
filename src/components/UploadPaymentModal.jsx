@@ -82,7 +82,7 @@ const UploadPaymentModal = ({ invoiceId, setInvoices, setMaxPage, setTotalData, 
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-80 scale-90"
           >
-            <div className="w-[70%] sm:w-2/3 lg:w-1/2 xl:w-1/3 z-10 flex flex-col items-center bg-gray-50 rounded-lg shadow-md">
+            <div className="w-[370px] lg:w-[430px] z-10 flex flex-col items-center bg-gray-50 rounded-2xl shadow-md">
               <div className="w-full flex justify-center pt-8">
                 <span className="text-[18px] lg:text-xl font-bold">Upload Payment Proof for Invoice #7</span>
               </div>
@@ -120,7 +120,7 @@ const UploadPaymentModal = ({ invoiceId, setInvoices, setMaxPage, setTotalData, 
                       toast.error('File type not allowed!', { position: 'top-center', theme: 'colored' });
                     }
                   }}
-                  className="w-[80%] h-full border-2 bg-white border-gray-400 border-dotted rounded-lg flex justify-center"
+                  className="w-[80%] h-full border-2 bg-white border-gray-400 border-dotted rounded-xl flex justify-center"
                 >
                   {paymentImage ? (
                     <div className="w-full h-full flex justify-center items-center">
@@ -164,7 +164,7 @@ const UploadPaymentModal = ({ invoiceId, setInvoices, setMaxPage, setTotalData, 
                     setOpen(false);
                     setPaymentImage(null);
                   }}
-                  className="font-semibold text-rose-400 hover:brightness-110 active:scale-95 transition cursor-pointer disabled:hover:brightness-100 disabled:text-gray-400 disabled:active:scale-100 disabled:cursor-default"
+                  className="font-semibold text-rose-400 hover:brightness-110 active:scale-95 transition cursor-pointer disabled:hover:brightness-100 disabled:text-gray-400 disabled:active:scale-100 disabled:cursor-default text-md"
                 >
                   Cancel
                 </button>

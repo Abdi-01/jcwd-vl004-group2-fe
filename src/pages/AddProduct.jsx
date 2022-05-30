@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../assets/constants";
+import { FaPhotoVideo } from "react-icons/fa";
 import "../assets/styles/Currency.css";
 
 const AddProduct = () => {
@@ -148,14 +149,26 @@ const AddProduct = () => {
             <div className="col-start-1">
               <label className="">Image:</label>
             </div>
-            <div className="col-start-2 col-span-3">
-              <input
-                type="file"
-                name="image"
-                required
-                onChange={onBtAddFile}
-                accept="image/*"
-              />
+            <div className="col-start-2">
+              <label htmlFor="file">
+                <div className="py-1 px-6 text-white bg-primary cursor-pointer hover:bg-blue-400 transition rounded-xl items-center">
+                  <div className="flex justify-center items-center">
+                    <FaPhotoVideo
+                      htmlColor="tomato"
+                      className="shareIcon mr-1"
+                    />
+                    <div>Add Photo</div>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  id="file"
+                  name="image"
+                  onChange={onBtAddFile}
+                  accept="image/*"
+                  style={{ display: "none" }}
+                />
+              </label>
             </div>
             <div className="col-start-2">
               <img id="imgpreview" />
@@ -309,7 +322,6 @@ const AddProduct = () => {
               className="mt-8 py-2.5 px-6 text-white bg-red-500 cursor-pointer hover:bg-red-400 transition rounded-xl items-center"
               onClick={() => navigate(-1)}
             >
-              {/* <a href="http://localhost:3000/dashboard/product">Cancel</a> */}
               Cancel
             </div>
           </div>

@@ -29,7 +29,7 @@ const ResetAdmin = () => {
 
         toast.success(response.data.message);
         setIsLoading(false);
-        setTimeout(() => navigate('/admin/login'), 7000);
+        setTimeout(() => navigate('/admin/login'), 4000);
       } catch (error) {
         setIsLoading(false);
         toast.error(error.response.data.message);

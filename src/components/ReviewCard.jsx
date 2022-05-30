@@ -49,7 +49,10 @@ const ReviewCard = ({ data, userId, setTotalReviews, setAvgRating, setReviews, s
           <div className="w-full pt-5 flex justify-center items-center">
             <div className="h-12 w-12 lg:h-16 lg:w-16 xl:h-20 xl:w-20 rounded-full bg-gradient-to-br from-sky-300 to-emerald-300 flex justify-center items-center">
               <div className="h-[90%] w-[90%] rounded-full overflow-hidden flex justify-center items-center">
-                <img src={`${API_URL}/${review.user?.profile_picture}`} className="h-full object-cover" />
+                <img
+                  src={anonymus ? `${API_URL}/public/images/profile/default.png` : `${API_URL}/${review.user?.profile_picture}`}
+                  className="h-full object-cover"
+                />
               </div>
             </div>
           </div>

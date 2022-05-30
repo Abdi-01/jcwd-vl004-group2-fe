@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Axios from 'axios';
 import { API_URL } from '../assets/constants';
@@ -155,7 +155,7 @@ const Messages = () => {
             renderMessages()
           ) : (
             <div className="w-full h-[400px] flex justify-center items-center">
-              <span className="text-2xl md:text-3xl lg:text-4xl font-thin text-gray-700">You don't have any notifications</span>
+              <span className="text-2xl md:text-3xl lg:text-3xl font-thin text-sky-400">You don't have any notifications</span>
             </div>
           )}
         </div>

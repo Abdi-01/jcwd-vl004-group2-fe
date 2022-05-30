@@ -1,4 +1,4 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../assets/constants';
 
@@ -10,7 +10,10 @@ import { AiOutlineUser } from 'react-icons/ai';
 import { FiLogOut } from 'react-icons/fi';
 
 const AccountButton = ({ children }) => {
-  const MenuLink = ({ children, logout, icon, to }) => {
+  const cartTotal = useSelector((state) => state.cartTotal.cartTotal);
+  const notification = useSelector((state) => state.notification.alert);
+
+  const MenuLink = ({ children, logout, icon, to, badge }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
@@ -36,7 +39,14 @@ const AccountButton = ({ children }) => {
                 active ? (logout ? 'bg-rose-200 text-red-600' : 'bg-sky-100 text-sky-600') : 'bg-white'
               } transition duration-100 flex items-center text-gray-700 pl-3 gap-2`}
             >
-              {icon}
+              <div className="flex justify-center items-center relative">
+                {icon}
+                {badge ? (
+                  <span className="absolute h-3 w-3 rounded-full bg-red-400 text-[10px] text-white text-bold flex items-center justify-center -top-[2px] -right-1">
+                    {badge}
+                  </span>
+                ) : null}
+              </div>
               <span className="text-md font-semibold">{children}</span>
             </div>
           </div>
@@ -66,13 +76,13 @@ const AccountButton = ({ children }) => {
         >
           <Menu.Items
             as="div"
-            className="rounded-lg absolute z-10 top-6 right-4 md:top-8 md:right-5 overflow-hidden focus:outline-none shadow-lg"
+            className="rounded-lg absolute z-10 top-6 right-8 md:top-8 md:right-9 lg:right-8 overflow-hidden focus:outline-none shadow-lg"
           >
             <div className="w-full sm:hidden flex flex-col">
-              <MenuLink icon={<FaShoppingBag />} to="/cart">
+              <MenuLink icon={<FaShoppingBag />} to="/cart" badge={cartTotal}>
                 Cart
               </MenuLink>
-              <MenuLink icon={<FaBell />} to="/user/notification">
+              <MenuLink icon={<FaBell />} to="/user/notification" badge={notification}>
                 Notification
               </MenuLink>
             </div>

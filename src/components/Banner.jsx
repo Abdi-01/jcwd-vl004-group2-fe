@@ -32,7 +32,7 @@ const Banner = () => {
               </div>
               <div className="w-96 h-14 px-10">
                 <button
-                  onClick={() => navigate('/products')}
+                  onClick={() => navigate('/products/all')}
                   className="h-full w-full border-2 rounded-lg border-white font-bold text-2xl text-white hover:bg-white hover:text-sky-500 transition duration-200 active:scale-95"
                 >
                   Shop Now
@@ -53,7 +53,10 @@ const Banner = () => {
                 <span>We're revolutionizing the pharmaceutical industry and we would like you to be a part of it</span>
               </div>
               <div className="w-96 h-14 px-10">
-                <button className="h-full w-full border-2 rounded-lg border-white font-bold text-2xl text-white hover:bg-white hover:text-sky-500 transition duration-200 active:scale-95">
+                <button
+                  onClick={() => navigate('/features')}
+                  className="h-full w-full border-2 rounded-lg border-white font-bold text-2xl text-white hover:bg-white hover:text-sky-500 transition duration-200 active:scale-95"
+                >
                   Discover
                 </button>
               </div>
@@ -75,7 +78,10 @@ const Banner = () => {
                 </span>
               </div>
               <div className="w-96 h-14 px-10">
-                <button className="h-full w-full border-2 rounded-lg border-white font-bold text-2xl text-white hover:bg-white hover:text-sky-500 transition duration-200 active:scale-95">
+                <button
+                  onClick={() => navigate('/blog')}
+                  className="h-full w-full border-2 rounded-lg border-white font-bold text-2xl text-white hover:bg-white hover:text-sky-500 transition duration-200 active:scale-95"
+                >
                   Read More
                 </button>
               </div>

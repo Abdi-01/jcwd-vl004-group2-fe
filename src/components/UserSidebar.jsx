@@ -1,5 +1,6 @@
-import { useState, Fragment } from 'react';
+import { useState, Fragment, useEffect, useCallback } from 'react';
 import { useNavigate, Link, NavLink, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import { Dialog, Transition } from '@headlessui/react';
 import { AiOutlineUser, AiOutlineHistory, AiOutlineMenu } from 'react-icons/ai';
@@ -20,7 +21,7 @@ const SidebarNavigation = ({ children, to, setOpen }) => {
   );
 };
 
-const ProfileNavigation = ({ children, icon, to, end, setOpen }) => {
+const ProfileNavigation = ({ children, icon, to, end, setOpen, badge }) => {
   return (
     <NavLink to={to} end={end}>
       {({ isActive }) => (
@@ -36,7 +37,12 @@ const ProfileNavigation = ({ children, icon, to, end, setOpen }) => {
             }  transition flex items-center gap-2 hover:brightness-110 relative`}
           >
             <span className={`h-2 w-2 rounded-full bg-green-300 ${isActive ? 'translate-x-0 block' : '-translate-x-5 hidden'}`}></span>
-            {icon}
+            <div className="relative flex justify-center items-center">
+              {icon}
+              {badge ? (
+                <span className="h-2 w-2 rounded-full bg-red-400 text-white font-bold absolute -top-[1px] -right-[2px]"></span>
+              ) : null}
+            </div>
             <span>{children}</span>
           </div>
         </div>
@@ -50,6 +56,24 @@ const UserSidebar = () => {
   const navigate = useNavigate();
   const userToken = localStorage.getItem('userToken');
   const [open, setOpen] = useState(false);
+
+  const notification = useSelector((state) => state.notification.alert);
+  const history = useSelector((state) => state.notification.history);
+  const awaiting = useSelector((state) => state.notification.awaiting);
+
+  const handleClose = useCallback(() => {
+    if (window.innerWidth > 768) {
+      setOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', handleClose);
+
+    return () => {
+      window.removeEventListener('resize', handleClose);
+    };
+  }, []);
 
   return (
     <>
@@ -109,13 +133,13 @@ const UserSidebar = () => {
                     <ProfileNavigation to={'address'} icon={<IoLocationOutline />} setOpen={setOpen}>
                       Address
                     </ProfileNavigation>
-                    <ProfileNavigation to={'payment'} icon={<MdPayment />} setOpen={setOpen}>
+                    <ProfileNavigation to={'payment'} icon={<MdPayment />} setOpen={setOpen} badge={awaiting}>
                       Payment
                     </ProfileNavigation>
-                    <ProfileNavigation to={'history'} icon={<AiOutlineHistory />} setOpen={setOpen}>
+                    <ProfileNavigation to={'history'} icon={<AiOutlineHistory />} setOpen={setOpen} badge={history}>
                       History
                     </ProfileNavigation>
-                    <ProfileNavigation to={'notification'} icon={<FiMail />} setOpen={setOpen}>
+                    <ProfileNavigation to={'notification'} icon={<FiMail />} setOpen={setOpen} badge={notification}>
                       Notifications
                     </ProfileNavigation>
                   </div>
